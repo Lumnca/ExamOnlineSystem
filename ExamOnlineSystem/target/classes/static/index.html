@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>课程总览</title>
+    <script src="js/vue/vue.js"></script>
+    <script src="js/vue/index.js"></script>
+    <script src="js/vue/axios.min.js"></script>
+    <script src="js/request.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/signin.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row :gutter="20">
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="rehref('index.html')"><span style="font-size:32px;"><i
+                                        class="el-icon-platform-eleme"></i>线上考试平台</span></el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="13">
+                        <div>
+                            {{date}}
+                        </div>
+                    </el-col>
+                    <el-col :span="5">
+                   
+                    </el-col>
+                    <el-col :span="1" style="margin-left:-25px;">
+                    </el-col>
+                    <el-col :span="1" style="float:right;">
+                        <div class="grid-content bg-purple" v-if="islogin">
+                            <el-dropdown>
+                                <el-avatar :size="60" src="https://empty">
+                                    <img src="https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png" />
+                                </el-avatar>
+                                <el-dropdown-menu slot="dropdown">
+                                    <el-dropdown-item>{{user.name}}</el-dropdown-item>
+                                    <el-dropdown-item>
+                                        <el-button type="text" @click="rehref('../index.html')"><span><i
+                                                    class="el-icon-suitcase"></i>用户中心</span></el-button>
+                                    </el-dropdown-item>
+                                    <el-dropdown-item>
+                                        <el-button type="text" @click="out()"><span><i
+                                                    class="el-icon-back"></i>登出</span></el-button>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </div>
+                        <div v-else>
+                            <el-button type="text" @click="centerDialogVisible = true"><i class="el-icon-user-solid"></i> {{isLoginCheck}} </el-button>
+                            <el-dialog title="登录" :visible.sync="centerDialogVisible" width="30%" center>
+                                <div class="signin">
+                                    <div class="signin-head"><img src="img/test/head_120.png" alt="" class="img-circle"></div>
+                                    <form action="http://127.0.0.1:100/login" method="POST" class="form-signin" role="form">
+                                        <input type="text" class="form-control" placeholder="用户名" name="username" required />
+                                        <input type="password" class="form-control" name="password" placeholder="密码" required />
+                                        <button class="btn btn-lg btn-warning btn-block" type="submit">登录</button>
+                                    </form>
+                                </div>
+                            </el-dialog>
+                        </div>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-main id="main">
+                <div id="index">
+                    <h2>主页</h2>
+                </div>
+            </el-main>
+            <el-container>
+                <el-footer>
+                    Copyright © 2020 Tencent. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<script>
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                search: '',
+                isLoginCheck: '未登录',
+                islogin: false,
+                centerDialogVisible: false,
+                date: new Date()
+            }
+        },
+        methods: {
+        },
+    })
+
+</script>
+
+</html>

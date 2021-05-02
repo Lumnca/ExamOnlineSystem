@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我的题目集</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="../js/vue/axios.min.js"></script>
+    <script src="../js/date.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/wangeditor@latest/dist/wangEditor.min.js"></script>
+    <script src="../js/request.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row>
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="reUrl('../index.html')">
+                                <span style="font-size:32px;"><i class="el-icon-platform-eleme"></i>线上考试平台</span>
+                            </el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="17">
+                        <div>
+                            &nbsp;
+                        </div>
+                    </el-col>
+                    <el-col :span="2">
+                        <div style="text-align: right;">
+                            {{username? username:'xx'}}
+                        </div>
+                    </el-col>
+                    <el-col :span="1">
+                        <el-popover placement="bottom" width="100" trigger="click">
+                            <div>
+                                <div class="userbored">
+                                    <el-link href="account.html" icon="el-icon-user" :underline="false">个人中心</el-link>
+                                </div>
+                                <div class="userbored">
+                                    <el-link href="../index.html" icon="el-icon-back" :underline="false">退出</el-link>
+                                </div>
+                            </div>
+                            <el-button icon="el-icon-user-solid" slot="reference" circle></el-button>
+                        </el-popover>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-container>
+                <el-aside width="240px" style=" background:#FFF;">
+                    <div class="tmj">
+                        <div class="s" @click="reUrl('testpaper.html')">
+                            <span class="el-icon-d-arrow-left"></span> 题目集列表
+                        </div>
+                        <div class="s" @click="updateView(1)">
+                            <span class="el-icon-reading"></span> 题目管理
+                        </div>
+                        <div class="s" @click="updateView(2)">
+                            <span class="el-icon-circle-plus-outline"></span> 添加题目
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="l">
+                        <div>
+                            {{exercise.name}} 共{{sum}}分
+                        </div>
+                        <div v-for="(c,i) in exercise.parts">
+                            <div class="l t">
+                                {{(i+1)}}.{{c.name}}
+                            </div>
+                            <div class="t">
+                                <el-row :gutter="5">
+                                    <el-col :span="4" v-for="(p,l) in c.content" style="margin-top:4px;">
+                                        <div @click="changeT(p,c)" class="sborder">{{l+1}}</div>
+                                    </el-col>
+                                </el-row>
+                            </div>
+                        </div>
+                    </div>
+                </el-aside>
+                <el-main style=" background:#FFF;">
+                    <div v-if="nowselect == 1">
+                        <div v-if="!showT">
+                            <el-tabs v-model="activeName" type="card">
+                                <el-tab-pane v-for="(p,i) in exercise.parts" :label="p.name" :name="i+''">
+                                    <div v-if="p.type == 2">
+                                        <el-table :data="p.content" style="width: 100%" stripe>
+                                            <el-table-column prop="tag" label="标号" width="80">
+
+                                            </el-table-column>
+                                            <el-table-column label="标题">
+                                                <template slot-scope="scope">
+                                                    <div @click="showSubject(p,scope.row)" class="tit">
+                                                        {{ scope.row.title }}
+                                                    </div>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column fixed="right" label="操作" width="100">
+                                                <template slot-scope="scope">
+                                                    <el-button @click="deleteRow(scope.$index,p.content)" type="text" size="small">
+                                                        <i class="el-icon-delete"></i>删除</el-button>
+                                                </template>
+                                            </el-table-column>
+                                        </el-table>
+                                    </div>
+                                    <div v-else-if="p.type == 1">
+                                        <el-table :data="p.content" style="width: 100%" stripe>
+                                            <el-table-column prop="tag" label="标号">
+
+                                            </el-table-column>
+                                            <el-table-column label="标题">
+                                                <template slot-scope="scope">
+                                                    <div class="tit" @click="showSubject(p,scope.row)">
+                                                        {{ scope.row.title }}
+                                                    </div>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column prop="score" label="分数">
+                                            </el-table-column>
+                                            <el-table-column label="类型">
+                                                <template slot-scope="scope">
+                                                    <el-tag v-if="scope.row.type == 1">单选</el-tag>
+                                                    <el-tag v-else>多选</el-tag>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column label="选项">
+                                                <template slot-scope="scope">
+                                                    {{scope.row.options.length}} 选项
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column fixed="right" label="操作" width="100">
+                                                <template slot-scope="scope">
+                                                    <el-button @click="deleteRow(scope.$index,p.content)" type="text" size="small">
+                                                        <i class="el-icon-delete"></i>删除</el-button>
+                                                </template>
+                                            </el-table-column>
+                                        </el-table>
+                                    </div>
+                                    <div v-else-if="p.type == 3">
+                                        <el-table :data="p.content" style="width: 100%" stripe>
+                                            <el-table-column prop="tag" label="标号" width="80">
+                                            </el-table-column>
+                                            <el-table-column label="标题">
+                                                <template slot-scope="scope">
+                                                    <div @click="showSubject(p,scope.row)" class="tit">
+                                                        {{ scope.row.title }}</div>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column prop="score" label="分数">
+
+                                            </el-table-column>
+                                            <el-table-column fixed="right" label="操作" width="100">
+                                                <template slot-scope="scope">
+                                                    <el-button @click="deleteRow(scope.$index,p.content)" type="text" size="small">
+                                                        <i class="el-icon-delete"></i>删除</el-button>
+                                                </template>
+                                            </el-table-column>
+                                        </el-table>
+                                    </div>
+                                    <div v-else-if="p.type == 4">
+                                        <el-table :data="p.content" style="width: 100%" stripe>
+                                            <el-table-column prop="tag" label="标号" width="80">
+
+                                            </el-table-column>
+                                            <el-table-column label="标题">
+                                                <template slot-scope="scope">
+                                                    <div @click="showSubject(p,scope.row)" class="tit">
+                                                        {{ scope.row.title }}</div>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column prop="score" label="分数">
+                                            </el-table-column>
+                                            <el-table-column prop="answer" label="答案">
+                                            </el-table-column>
+                                            <el-table-column fixed="right" label="操作" width="100">
+                                                <template slot-scope="scope">
+                                                    <el-button @click="deleteRow(scope.$index,p.content)" type="text" size="small">
+                                                        <i class="el-icon-delete"></i>删除</el-button>
+                                                </template>
+                                            </el-table-column>
+                                        </el-table>
+                                    </div>
+                                    <div v-else>
+                                        <el-table :data="p.content" style="width: 100%" stripe>
+                                            <el-table-column prop="tag" label="标号" width="80">
+
+                                            </el-table-column>
+                                            <el-table-column label="标题">
+                                                <template slot-scope="scope">
+                                                    <div class="tit">{{ scope.row.title }}</div>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column fixed="right" label="操作" width="100">
+                                                <template slot-scope="scope">
+                                                    <el-button @click="deleteRow(scope.$index,p.content)" type="text" size="small">
+                                                        <i class="el-icon-delete"></i>删除</el-button>
+                                                </template>
+                                            </el-table-column>
+                                        </el-table>
+                                    </div>
+                                </el-tab-pane>
+                        </div>
+                        <div v-else>
+                            <div>
+                                <div class="showtime">
+                                    <el-row>
+                                        <el-col :span="3">
+                                            <div class="l">
+                                                <el-button @click="showT = false"> 返回列表</el-button>
+                                            </div>
+                                        </el-col>
+                                        <el-col :span="18">
+                                            <div class="z">
+                                                <el-input v-model="subject.title"></el-input>
+                                            </div>
+                                        </el-col>
+                                        <el-col :span="3">
+                                            <div class="r">
+                                                <el-button type="primary" @click="postTestPaperData"> 保存</el-button>
+                                            </div>
+                                        </el-col>
+                                    </el-row>
+
+                                </div>
+                                <div id="edit" class="ext edi" v-loading="loading" v-html="subject.content">
+
+                                </div>
+                                <div v-if="part == 1">
+                                    <div class="ext szt">
+                                        <el-form label-position="left" label-width="80px">
+                                            <div v-for="(o,i) in subject.options">
+                                                <el-form-item :label="String.fromCharCode(65+i)+'选项'">
+                                                    <el-input v-model="subject.options[i]"></el-input>
+                                                </el-form-item>
+                                            </div>
+
+                                            <div v-for="(o1,i1) in subject.options"
+                                                style="margin-top:5px;font-size: 19px;">
+                                                <div v-if="subject.type==1">
+                                                    <el-radio v-model="subject.answer" :label="i1">
+                                                        {{String.fromCharCode(65+i1)}}.{{o1}}
+                                                    </el-radio>
+                                                </div>
+
+                                                <div v-else>
+                                                    <el-checkbox-group v-model="subject.answer">
+                                                        <el-checkbox :label="i1" :key="i1">
+                                                            {{String.fromCharCode(65+i1)}}.{{o1}}</el-checkbox>
+                                                    </el-checkbox-group>
+
+                                                </div>
+                                            </div>
+                                            <div v-if="subject.type == 1" class="fs">
+                                                正确答案: {{String.fromCharCode(65+subject.answer)}}
+                                            </div>
+                                            <div v-else class="fs">
+                                                正确答案: <span v-for="k in subject.answer"> {{String.fromCharCode(65+k)}},
+                                                </span>
+                                            </div>
+                                        </el-form>
+
+
+                                    </div>
+                                </div>
+                                <div v-else-if="part == 2" style="text-align: left">
+                                    <el-form label-position="left" label-width="80px">
+                                        <br>
+                                        <el-form-item label="选项数量">
+                                            <el-button @click="plusS(subject,1)">减少数量
+                                            </el-button>
+                                            <el-button @click="addS(subject,1)">增加数量</el-button>
+                                        </el-form-item>
+
+                                        <br>
+                                        <div class="tmda" v-for="(o,i) in subject.answer">
+                                            <p>
+                                                第 {{i+1}} 空答案
+                                            </p>
+
+                                            <el-form-item v-for="(obj,j) in subject.answer[i].txt" :label="'答案'+(j)">
+                                                <el-input v-model="subject.answer[i].txt[j]">
+                                                </el-input>
+
+                                            </el-form-item>
+
+                                            <el-form-item label="答案数量">
+                                                <el-button @click="plusS(o,2)">减少数量
+                                                </el-button>
+                                                <el-button @click="addS(o,2)">增加数量</el-button>
+                                            </el-form-item>
+
+                                            <el-form-item label="判分标准">
+                                                <el-checkbox-group v-model="subject.answer[i].rules">
+                                                    <el-checkbox label="A">区分大小写</el-checkbox>
+                                                    <el-checkbox label="B">精确包含</el-checkbox>
+                                                    <el-checkbox label="C">模糊包含</el-checkbox>
+                                                </el-checkbox-group>
+                                            </el-form-item>
+
+
+                                            <el-form-item label="题目分数">
+                                                <el-input-number v-model="subject.answer[i].score" :min="1" :max="100">
+                                                </el-input-number>
+                                            </el-form-item>
+
+                                        </div>
+                                    </el-form>
+
+
+                                </div>
+                                <div v-else-if="part == 3">
+
+                                </div>
+                                <div v-else-if="part == 4">
+                                    <el-form label-position="left" label-width="80px" class="l">
+                                        <br>
+                                        <el-form-item label="答案">
+                                            <el-select v-model="subject.answer">
+                                                <el-option label="正确" :value="true"></el-option>
+                                                <el-option label="错误" :value="false"></el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                </div>
+                                <div v-else>
+
+                                </div>
+                                <div>
+                                    <table border="0">
+                                        <tr>
+                                            <td>
+                                                分数 &nbsp; &nbsp; &nbsp;
+                                            </td>
+                                            <td>
+                                                <el-input-number v-model="subject.score" :min="1" :max="10">
+                                                </el-input-number>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else-if="nowselect == 2">
+                        <el-tabs v-model="activeName" @tab-click="handTagChange">
+                            <el-tab-pane label="选择题" name="1">
+                                <div class="pg">
+                                    <el-form label-position="left" label-width="80px">
+                                        <el-form-item label="题目标题">
+                                            <el-input v-model="selectSubject.title"></el-input>
+                                        </el-form-item>
+                                        <el-form-item label="选择类型">
+                                            <el-select v-model="selectSubject.type" placeholder="请选择类型">
+                                                <el-option label="单选" :value="1"></el-option>
+                                                <el-option label="多选" :value="0"></el-option>
+                                            </el-select>
+                                        </el-form-item>
+
+                                        <div v-for="(o,i) in selectSubject.options">
+                                            <el-form-item :label="String.fromCharCode(65+i)+'选项'">
+                                                <el-input v-model="selectSubject.options[i]"></el-input>
+                                            </el-form-item>
+                                        </div>
+
+                                        <div v-for="(o1,i1) in selectSubject.options"
+                                            style="margin-top:5px;font-size: 19px;">
+                                            <div v-if="selectSubject.type==1">
+                                                <el-radio v-model="selectSubject.answer" :label="i1">
+                                                    {{String.fromCharCode(65+i1)}}.{{o1}}
+                                                </el-radio>
+                                            </div>
+                                            <div v-else>
+                                                <el-checkbox-group v-model="selectSubject.answer">
+                                                    <el-checkbox :label="i1" :key="i1">
+                                                        {{String.fromCharCode(65+i1)}}.{{o1}}</el-checkbox>
+                                                </el-checkbox-group>
+                                            </div>
+                                        </div>
+                                        <br>
+                                        <el-form-item label="选项数量">
+                                            <el-button @click="plusSSoption()">减少数量
+                                            </el-button>
+                                            <el-button @click="addSSoption()">增加数量</el-button>
+                                        </el-form-item>
+
+
+                                        <div v-if="selectSubject.type == 1" class="fs">
+                                            正确答案: {{String.fromCharCode(65+selectSubject.answer)}}
+                                        </div>
+                                        <div v-else class="fs">
+                                            正确答案: <span v-for="k in selectSubject.answer">
+                                                {{String.fromCharCode(65+k)}},
+                                            </span>
+                                        </div>
+                                        <br>
+                                        <el-form-item label="题目分数">
+                                            <el-input-number v-model="selectSubject.score" :min="1" :max="10">
+                                            </el-input-number>
+                                        </el-form-item>
+                                        <div class="bt">
+                                            题干
+                                        </div>
+                                        <div id="editor1" class="pg" v-loading="loading">
+
+                                        </div>
+                                    </el-form>
+                                    <div style="margin:8px; text-align: center;">
+                                        <el-button type="primary" @click="addSelectSubject">保存并添加</el-button>
+                                    </div>
+                                </div>
+                            </el-tab-pane>
+                            <el-tab-pane label="填空题" name="2">
+                                <div class="pg">
+                                    <el-form label-position="left" label-width="80px">
+                                        <el-form-item label="题目标题">
+                                            <el-input v-model="tkSubject.title"></el-input>
+                                        </el-form-item>
+
+                                        <el-form-item label="选项数量">
+                                            <el-button @click="plusS(tkSubject,1)">减少数量
+                                            </el-button>
+                                            <el-button @click="addS(tkSubject,1)">增加数量</el-button>
+                                        </el-form-item>
+
+
+                                        <div class="tmda" v-for="(o,i) in tkSubject.answer">
+                                            <p>
+                                                第 {{i+1}} 空答案
+                                            </p>
+
+                                            <el-form-item v-for="(obj,j) in tkSubject.answer[i].txt" :label="'答案'+(j+1)">
+                                                <el-input v-model="tkSubject.answer[i].txt[j]">
+                                                </el-input>
+
+                                            </el-form-item>
+
+                                            <el-form-item label="答案数量">
+                                                <el-button @click="plusS(o,2)">减少数量
+                                                </el-button>
+                                                <el-button @click="addS(o,2)">增加数量</el-button>
+                                            </el-form-item>
+
+                                            <el-form-item label="判分标准">
+                                                <el-checkbox-group v-model="tkSubject.answer[i].rules">
+                                                    <el-checkbox label="A">不区分大小写</el-checkbox>
+                                                    <el-checkbox label="B">精确包含</el-checkbox>
+                                                    <el-checkbox label="C">模糊包含</el-checkbox>
+                                                    <el-checkbox label="D">不保留空格</el-checkbox>
+                                                </el-checkbox-group>
+                                            </el-form-item>
+
+
+                                            <el-form-item label="题目分数">
+                                                <el-input-number v-model="tkSubject.answer[i].score" :min="1"
+                                                    :max="100">
+                                                </el-input-number>
+                                            </el-form-item>
+
+                                        </div>
+                                        <div class="bt">
+                                            题干
+                                        </div>
+                                        <div id="editor2" class="pg" v-loading="loading">
+
+                                        </div>
+                                    </el-form>
+                                    <div style="margin:8px; text-align: center;">
+                                        <el-button type="primary" @click="addTKSubject">保存并添加</el-button>
+                                    </div>
+                                </div>
+                            </el-tab-pane>
+                            <el-tab-pane label="判断题" name="3">
+                                <div class="pg">
+                                    <el-form label-position="left" label-width="80px">
+                                        <el-form-item label="题目标题">
+                                            <el-input v-model="judgeSubject.title"></el-input>
+                                        </el-form-item>
+                                        <el-form-item label="答案">
+                                            <el-select v-model="judgeSubject.answer">
+                                                <el-option label="正确" :value="true"></el-option>
+                                                <el-option label="错误" :value="false"></el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                        <br>
+
+                                        <el-form-item label="题目分数">
+                                            <el-input-number v-model="judgeSubject.score" :min="1" :max="100">
+                                            </el-input-number>
+                                        </el-form-item>
+                                        <div class="bt">
+                                            题干
+                                        </div>
+                                        <div id="editor3" class="pg" v-loading="loading">
+
+                                        </div>
+                                    </el-form>
+                                    <div style="margin:8px; text-align: center;">
+                                        <el-button type="primary" @click="addJudgeSubject">保存并添加</el-button>
+                                    </div>
+                                </div>
+                            </el-tab-pane>
+                            <el-tab-pane label="主观题" name="4">
+                                <div class="pg">
+                                    <el-form label-position="left" label-width="80px">
+                                        <el-form-item label="题目标题">
+                                            <el-input v-model="subjective.title"></el-input>
+                                        </el-form-item>
+                                        <br>
+                                        <el-form-item label="题目分数">
+                                            <el-input-number v-model="subjective.score" :min="1" :max="100">
+                                            </el-input-number>
+                                        </el-form-item>
+                                        <div class="bt">
+                                            题干
+                                        </div>
+                                        <div id="editor4" class="pg" v-loading="loading">
+
+                                        </div>
+                                    </el-form>
+                                    <div style="margin:8px; text-align: center;">
+                                        <el-button type="primary" @click="addSubjective">保存并添加</el-button>
+                                    </div>
+                                </div>
+                            </el-tab-pane>
+                        </el-tabs>
+                    </div>
+                </el-main>
+            </el-container>
+            <el-container>
+
+            </el-container>
+    </div>
+</body>
+<script>
+    var doms = document.getElementsByClassName('s');
+    if (doms[1]) {
+        doms[1].classList.add('sel1');
+    }
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                username: 'xx',
+                centerDialogVisible: false,
+                activeName: '0',
+                date: new Date(),
+                currentDate: new Date(),
+                nowselect: 1,
+                exercise: {
+                    name: '',
+                    type: '随机',
+                    startdate: '2021-3-31 10:00',
+                    enddate: '2021-4-2 12:30',
+                    parts: [],
+                    info: demo,
+                },
+                subject: {},
+                showT: false,
+                activeName: '',
+                loading: true,
+                part: 0,
+                selectSubject: {
+                    id: '',
+                    tag: '',
+                    name: '',
+                    title: '',
+                    content: '',
+                    score: '',
+                    type: 1,
+                    answer: [],
+                    options: ["选项一", "选择二", "选择三", "选择四"],
+                    part: 1,
+                    select : '',
+                    df : 0
+                },
+                tkSubject: {
+                    id: '',
+                    tag: '',
+                    name: '',
+                    title: '',
+                    content: '',
+                    score: 1,
+                    number: 1,
+                    answer: [{ rules: [], txt: ["答案一"], score: 4 }],
+                    part: 2,
+                    inputs: [],
+                    df : 0
+                },
+                subjective: {
+                    id: '',
+                    tag: '',
+                    name: '',
+                    title: '',
+                    content: '',
+                    score: 10,
+                    part: 3,
+                    input : '',
+                    df : 0
+                },
+                judgeSubject: {
+                    id: '',
+                    tag: '',
+                    name: '',
+                    title: '',
+                    content: '',
+                    score: 2,
+                    part: 4,
+                    answer: false,
+                    select : '',
+                    df :0
+                }
+            }
+        },
+        methods: {
+            reUrl(url) {
+                window.location.href = url;
+            },
+            updateView(i) {
+                doms[this.nowselect].classList.remove('sel1');
+                this.nowselect = i;
+                doms[i].classList.add('sel1');
+                this.activeName = '';
+            },
+            changeT(p, c) {
+
+                this.showT = true;
+                this.subject = p;
+                this.loading = true;
+                this.part = c.type;
+                this.updateView(1);
+                if (app.editor) {
+                    app.editor.destroy();
+                }
+                setTimeout(() => {
+                    app.editor = loadEditor('#edit', 640);
+                    app.editor.txt.html(p.content);
+                    app.loading = false;
+                }, 1500);
+
+            },
+            showSubject(p, c) {
+                this.showT = true;
+                this.subject = c;
+                this.loading = true;
+                this.part = p.type;
+                this.updateView(1);
+                if (app.editor) {
+                    app.editor.destroy();
+                }
+                setTimeout(() => {
+                    app.editor = loadEditor('#edit', 640);
+                    app.editor.txt.html(c.content);
+                    app.loading = false;
+                }, 1500);
+            },
+            plusSSoption() {
+                this.selectSubject.options.pop();
+            },
+            addSSoption() {
+                this.selectSubject.options.push('新选项');
+            },
+            handTagChange(tag, e) {
+                this.loading = true;
+                if (app.editor) {
+                    app.editor.destroy();
+                }
+                setTimeout(() => {
+                    app.editor = loadEditor('#editor' + tag.name, 300);
+                    app.loading = false;
+                }, 1500);
+            },
+            plusS(s, i) {
+                if (i == 1) {
+                    s.answer.pop();
+                }
+                else {
+                    s.txt.pop();
+                }
+            },
+            addS(s, i) {
+                if (i == 1) {
+                    s.answer.push({ txt: [], rules: [], score: 4 });
+                }
+                else {
+                    s.txt.push("答案");
+                }
+            },
+            addSelectSubject() {
+                let exist = false;
+                app.selectSubject.content = app.editor.txt.html();
+              
+                this.exercise.parts.forEach(e => {
+                    if (e.type == app.selectSubject.part) {
+                        exist = true;
+                        app.selectSubject.id = randomOxStr();
+                        app.selectSubject.tag = e.type +'-'+ (e.content.length+1);
+                        e.content.push(app.selectSubject);
+                    }
+                });
+
+                if (!exist) {
+                    this.exercise.parts.push({ name: '选择题', type: 1, content: [], score: 0 });
+                    this.addSelectSubject();
+                }
+                else {
+                    this.postTestPaperData();
+                }
+            },
+            addTKSubject() {
+                let exist = false;
+                app.tkSubject.content = app.editor.txt.html();
+                this.exercise.parts.forEach(e => {
+                    if (e.type == app.tkSubject.part) {
+                        exist = true;
+                        app.tkSubject.id = randomOxStr();
+                        app.tkSubject.tag = e.type +'-'+ (e.content.length+1);
+                        e.content.push(app.tkSubject);
+                    }
+                });
+                if (!exist) {
+                    this.exercise.parts.push({ name: '填空题', type: 2, content: [], score: 0 });
+                    this.addTKSubject();
+                }
+                else {
+                    this.postTestPaperData();
+                }
+            },
+            addSubjective() {
+                let exist = false;
+                app.subjective.content = app.editor.txt.html();
+                this.exercise.parts.forEach(e => {
+                    if (e.type == app.subjective.part) {
+                        exist = true;
+                        app.subjective.id = randomOxStr();
+                        app.subjective.tag = e.type +'-'+ (e.content.length+1);
+                        e.content.push(app.subjective);
+                    }
+                });
+                if (!exist) {
+                    this.exercise.parts.push({ name: '主观题', type: 3, content: [], score: 0 });
+                    this.addSubjective();
+                }
+                else {
+                    this.postTestPaperData();
+                }
+            },
+            addJudgeSubject() {
+                let exist = false;
+                app.judgeSubject.content = app.editor.txt.html();
+                this.exercise.parts.forEach(e => {
+                    if (e.type == app.judgeSubject.part) {
+                        exist = true;
+                        app.judgeSubject.id = randomOxStr();
+                        app.judgeSubject.tag = e.type +'-'+ (e.content.length+1);
+                        e.content.push(app.judgeSubject);
+                    }
+                });
+                if (!exist) {
+                    this.exercise.parts.push({ name: '判断题', type: 4, content: [], score: 0 });
+                    this.addJudgeSubject();
+                }
+                else {
+                    this.postTestPaperData();
+                }
+            },
+            postTestPaperData() {
+                request('POST', '/uptpcontent/' + getOneUrlStr("id"), { data: JSON.stringify(app.exercise.parts) }, function (res) {
+                    app.$message(res.data.message);
+                    relaodView(1000);
+                }, null);
+            },
+            deleteRow(i,p){
+                p.splice(i,1);
+            }
+        },
+        computed: {
+            sum: function () {
+                let s = 0;
+                this.exercise.parts.forEach(e => {
+                    e.content.forEach(c => {
+                        s += c.score;
+                    })
+                })
+                return s;
+            }
+        }
+    });
+
+    app.username = getUserInfo().username;
+
+    request('GET', '/gtp/' + getOneUrlStr("id"), null, function (res) {
+        app.exercise = res.data;
+        app.exercise.parts = res.data.content ? JSON.parse(res.data.content) : [];
+        if (app.exercise.parts.length == 0) {
+            app.$message("你暂时没有数据哟，请添加题目吧！");
+            app.updateView(2);
+        }
+        else{
+            //app.$message("数据加载成功！");
+        }
+
+    }, null);
+
+
+
+</script>
+
+</html>

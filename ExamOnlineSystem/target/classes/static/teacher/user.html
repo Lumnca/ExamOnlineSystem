@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>用户中心</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="../js/vue/axios.min.js"></script>
+    <script src="../js/request.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row>
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="reUrl('../index.html')">
+                                <span style="font-size:32px;"><i class="el-icon-platform-eleme"></i>线上考试平台</span>
+                            </el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="17">
+                        <div>
+                            &nbsp;
+                        </div>
+                    </el-col>
+                    <el-col :span="2">
+                            <div style="text-align: right;">
+                                    {{username}}
+                                </div>
+                    </el-col>
+                    <el-col :span="1">
+                        <el-popover placement="bottom" width="100" trigger="click">
+                            <div>
+                                <div class="userbored">
+                                    <el-link href="account.html" icon="el-icon-user" :underline="false">个人中心</el-link>
+                                </div>
+                                <div class="userbored">
+                                    <el-link href="../index.html" icon="el-icon-back" :underline="false">退出</el-link>
+                                </div>
+                            </div>
+                            <el-button icon="el-icon-user-solid" slot="reference" circle></el-button>
+                        </el-popover>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-container>
+                <el-aside width="400px">
+                    <div class="showt">
+                        <div class="e">个人数据</div>
+                        <el-row>
+                            <el-col :span="12">
+                                <div> 学生 <br> <b>128</b> </div>
+                            </el-col>
+                            <el-col :span="12">
+                                <div> 题目集 <br> <b>8</b> </div>
+                            </el-col>
+                        </el-row>
+                        <br>
+                        <el-row>
+                            <el-col :span="12">
+                                <div class="u"> 考试 <br> <b>18</b> </div>
+                            </el-col>
+                            <el-col :span="12">
+                                <div class="u"> 提交 <br> <b>254</b> </div>
+                            </el-col>
+                        </el-row>
+
+                    </div>
+                    <div class="showt">
+                        <div class="e">平台功能</div>
+                        <el-row>
+                            <el-col :span="8">
+                                <div class="u"> <i class="el-icon-s-goods"></i> <br>
+                                    <el-link :underline="false">商城</el-link>
+                                </div>
+                            </el-col>
+                            <el-col :span="8">
+                                <div class="u"> <i class="el-icon-question"></i> <br>
+                                    <el-link :underline="false">反馈</el-link>
+                                </div>
+                            </el-col>
+                            <el-col :span="8">
+                                <div class="u"> <i class="el-icon-s-data"></i> <br>
+                                    <el-link :underline="false">数据</el-link>
+                                </div>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :span="8">
+                                <div class="u"> <i class="el-icon-school"></i> <br>
+                                    <el-link :underline="false">高校</el-link>
+                                </div>
+                            </el-col>
+                            <el-col :span="8">
+                                <div class="u"> <i class="el-icon-share"></i> <br>
+                                    <el-link :underline="false"> 分享</el-link>
+                                </div>
+                            </el-col>
+                            <el-col :span="8">
+
+                            </el-col>
+                        </el-row>
+                    </div>
+                    <div class="showt">
+                        <el-calendar>
+                            <!-- 这里使用的是 2.5 slot 语法，对于新项目请使用 2.6 slot 语法-->
+                            <template slot="dateCell" slot-scope="{date, data}">
+                                <p class="date" :class="data.isSelected ? 'is-selected' : ''">
+                                    {{ data.day.split('-').pop() }} {{ data.isSelected ? '✔️' : ''}}
+                                </p>
+                            </template>
+                        </el-calendar>
+                    </div>
+                </el-aside>
+                <el-main>
+                    <el-row :gutter="20">
+                        <el-col :span="6">
+                            <div class="gcbp" @click="reUrl('class.html')">
+                               <i class="el-icon-eleme"></i> 用户组管理
+                            </div>
+                        </el-col>
+                        <el-col :span="6">
+                            <div class="gcbp" @click="reUrl('testpaper.html')">
+                                <i class="el-icon-menu"></i> 题目集管理
+                            </div>
+                        </el-col>
+                        <el-col :span="6">
+                            <div class="gcbp" @click="reUrl('testmanage.html')">
+                                <i class="el-icon-data-board"></i> 考试管理
+                            </div>
+                        </el-col>
+                        <el-col :span="6">
+                            <div class="gcbp">
+                                <i class="el-icon-s-operation"></i> 系统设置
+                            </div>
+                        </el-col>
+                    </el-row>
+                </el-main>
+            </el-container>
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 XXX. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<style>
+    .el-calendar-table .el-calendar-day {
+        height: 60px;
+        padding: 4px;
+    }
+</style>
+<script>
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                centerDialogVisible: false,
+                activeName: 'first',
+                date: new Date(),
+                currentDate: new Date(),
+                subjects: [
+                    { name: '数据结构', author: 'Kay', type: '题目集' },
+                    { name: 'C原因', author: 'Kay', type: '考试' },
+                    { name: '题目集三', author: 'Kay', type: '--' },
+                    { name: '题目集四', author: 'Kay', type: '--' },
+                ],
+                myexams: [
+                    { name: '数据结构', author: 'Kay', type: '题目集', date: '2月4日 12:00' },
+                ],
+                username : getUserInfo().username
+            }
+        },
+        methods: {
+
+            submitForm(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        alert('submit!');
+                    } else {
+                        console.log('error submit!!');
+                        return false;
+                    }
+                });
+            },
+            resetForm(formName) {
+                this.$refs[formName].resetFields();
+            },
+            reUrl(url) {
+                window.location.href = url;
+            }
+
+
+
+        },
+    })
+
+</script>
+
+</html>

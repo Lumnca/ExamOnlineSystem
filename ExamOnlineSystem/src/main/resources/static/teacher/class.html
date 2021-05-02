@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>班级分类</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="../js/vue/axios.min.js"></script>
+    <script src="../js/request.js"></script>
+    <script src="../js/date.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row>
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="reUrl('../index.html')">
+                                <span style="font-size:32px;"><i class="el-icon-platform-eleme"></i>线上考试平台</span>
+                            </el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="17">
+                        <div>
+                            &nbsp;
+                        </div>
+                    </el-col>
+                    <el-col :span="2">
+                            <div style="text-align: right;">
+                                    {{username}}
+                                </div>
+                    </el-col>
+                    <el-col :span="1">
+                        <el-popover placement="bottom" width="100" trigger="click">
+                            <div>
+                                <div class="userbored">
+                                    <el-link href="account.html" icon="el-icon-user" :underline="false">个人中心</el-link>
+                                </div>
+                                <div class="userbored">
+                                    <el-link href="../index.html" icon="el-icon-back" :underline="false">退出</el-link>
+                                </div>
+                            </div>
+                            <el-button icon="el-icon-user-solid" slot="reference" circle></el-button>
+                        </el-popover>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-main id="main">
+                <div class="classheader">
+                    <el-button size="mini" @click="dialogFormVisible = true">添加班级</el-button>
+
+                    <el-dialog title="班级信息" :visible.sync="dialogFormVisible">
+                        <el-form :model="form">
+                            <el-form-item label="班级名称">
+                                <el-input v-model="form.name" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="班级备注">
+                                <el-input v-model="form.info" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="邀请码">
+                                <el-input v-model="form.code" autocomplete="off"></el-input>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="dialogFormVisible = false">取 消</el-button>
+                            <el-button type="primary" @click="addClass(form)">确 定</el-button>
+                        </div>
+                    </el-dialog>
+                </div>
+                <div>
+                    <el-table
+                        :data="classInfor.filter(data => !search || data.name.toLowerCase().includes(search.toLowerCase()))"
+                        style="width: 100%">
+                        <el-table-column label="创建时间" prop="createdate">
+                        </el-table-column>
+                        <el-table-column label="名称" prop="name">
+                        </el-table-column>
+                        <el-table-column label="人数" prop="numbers">
+                        </el-table-column>
+                        <el-table-column label="说明" prop="info">
+                        </el-table-column>
+                        <el-table-column label="邀请码" prop="code">
+                        </el-table-column>
+                        <el-table-column align="right">
+                            <template slot="header" slot-scope="scope">
+                                <el-input v-model="search" size="mini" placeholder="输入关键字搜索" />
+                            </template>
+                            <template slot-scope="scope">
+                                <el-button size="mini" @click="updateClass(scope.row)">编辑</el-button>
+                                <el-button size="mini" @click="show(scope.row.id)">查看</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <br>
+                    <div class="block">
+
+                        <el-pagination layout="prev, pager, next" :total="classInfor.length">
+                        </el-pagination>
+                    </div>
+                </div>
+            </el-main>
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 XXX. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<script>
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                search: '',
+                isLoginCheck: '未登录',
+                islogin: false,
+                loginForm: {
+                    id: '',
+                    result: 0,
+                    pass: ''
+                },
+                username: getUserInfo().username,
+                centerDialogVisible: false,
+                date: new Date(),
+                currentDate: new Date(),
+                classInfor: [],
+                dialogFormVisible: false,
+                form: {
+                    id: 0,
+                    name: '',
+                    info: '',
+                    numbers: 0,
+                    createdate: '',
+                    code: ''
+                },
+                update: false,
+                cid : 0
+            }
+        },
+        methods: {
+            reUrl(url) {
+                window.location.href = url;
+            },
+            addClass(form) {
+               
+                if (!this.update) {
+                    form.createdate = getNowDate(1);
+                    form.uid = getUserInfo().id;
+                    form.id = this.classInfor.pop().id + 1;
+                    request('POST', "/addclass", form, function (res) {
+                        app.$message(res.data.message);
+                        relaodView(2000);
+                    }, null);
+                }
+                else{
+                    form.id = this.cid;
+                    request('POST', "/updatecla", form, function (res) {
+                        app.$message(res.data.message);
+                        relaodView(2000);
+                    }, null);
+                    this.update = false;
+                }
+                this.dialogFormVisible = false;
+            },
+            updateClass(c) {
+                this.form = c;
+                this.update = true;
+                this.dialogFormVisible = true;
+                this.cid = c.id;
+            },
+            show(id) {
+                this.reUrl('classpeople.html?id=' + id);
+            }
+        },
+    })
+    app.username = getUserInfo().username;
+    request('GET', "/classes/" + getUserInfo().id, null, function (res) {
+        app.classInfor = res.data;
+    }, null);
+</script>
+
+</html>

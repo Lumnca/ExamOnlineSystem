@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>用户中心</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="../js/vue/axios.min.js"></script>
+    <script src="../js/date.js"></script>
+    <script src="../js/request.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row>
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="reUrl('../index.html')">
+                                <span style="font-size:32px;"><i class="el-icon-platform-eleme"></i>线上考试平台</span>
+                            </el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="17">
+                        <div>
+                            &nbsp;
+                        </div>
+                    </el-col>
+                    <el-col :span="2">
+                        <div style="text-align: right;">
+                            {{username}}
+                        </div>
+                    </el-col>
+                    <el-col :span="1">
+                        <el-popover placement="bottom" width="100" trigger="click">
+                            <div>
+                                <div class="userbored">
+                                    <el-link href="account.html" icon="el-icon-user" :underline="false">个人中心</el-link>
+                                </div>
+                                <div class="userbored">
+                                    <el-link href="/logout" icon="el-icon-back" :underline="false">退出</el-link>
+                                </div>
+                            </div>
+                            <el-button icon="el-icon-user-solid" slot="reference" circle></el-button>
+                        </el-popover>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-container>
+                <el-aside width="400px">
+                    <div class="showt">
+                        <div class="e">平台数据</div>
+                        <el-row>
+                            <el-col :span="12">
+                                <div> 教师 <br> <b>912</b> </div>
+                            </el-col>
+                            <el-col :span="12">
+                                <div> 考试 <br> <b>18912</b> </div>
+                            </el-col>
+                        </el-row>
+                        <br>
+                        <el-row>
+                            <el-col :span="12">
+                                <div class="u"> 学生 <br> <b>5846</b> </div>
+                            </el-col>
+                            <el-col :span="12">
+                                <div class="u"> 提交 <br> <b>63512</b> </div>
+                            </el-col>
+                        </el-row>
+
+                    </div>
+                    <div class="showt">
+                        <div class="e">平台功能</div>
+                        <el-row>
+                            <el-col :span="8">
+                                <div class="u"> <i class="el-icon-s-goods"></i> <br>
+                                    <el-link :underline="false">商城</el-link>
+                                </div>
+                            </el-col>
+                            <el-col :span="8">
+                                <div class="u"> <i class="el-icon-question"></i> <br>
+                                    <el-link :underline="false">反馈</el-link>
+                                </div>
+                            </el-col>
+                            <el-col :span="8">
+                                <div class="u"> <i class="el-icon-s-data"></i> <br>
+                                    <el-link :underline="false">数据</el-link>
+                                </div>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :span="8">
+                                <div class="u"> <i class="el-icon-school"></i> <br>
+                                    <el-link :underline="false">高校</el-link>
+                                </div>
+                            </el-col>
+                            <el-col :span="8">
+                                <div class="u"> <i class="el-icon-share"></i> <br>
+                                    <el-link :underline="false"> 分享</el-link>
+                                </div>
+                            </el-col>
+                            <el-col :span="8">
+
+                            </el-col>
+                        </el-row>
+                    </div>
+                    <div class="showt">
+                        <el-calendar>
+                            <!-- 这里使用的是 2.5 slot 语法，对于新项目请使用 2.6 slot 语法-->
+                            <template slot="dateCell" slot-scope="{date, data}">
+                                <p class="date" :class="data.isSelected ? 'is-selected' : ''">
+                                    {{ data.day.split('-').pop() }} {{ data.isSelected ? '✔️' : ''}}
+                                </p>
+                            </template>
+                        </el-calendar>
+                    </div>
+                </el-aside>
+                <el-main>
+                    <template>
+                        <el-tabs v-model="activeName">
+                            <el-tab-pane label="通用考试" name="first">
+                                <div class="showt" v-for="i in subjects">
+                                    <div>
+                                        <el-row>
+                                            <el-col :span="1">
+                                                <div style="font-size:32px;"><i class="el-icon-monitor"></i></div>
+                                            </el-col>
+                                            <el-col :span="20">
+                                                <div style="float:left;font-size: 19px;"
+                                                    class="grid-content bg-purple-light">
+                                                    <el-link :underline="false" href="exam.html">{{i.name}}</el-link>
+                                                </div>
+                                            </el-col>
+                                            <el-col :span="3">
+                                                <el-tag size="mini">{{i.type}}</el-tag>&nbsp;<br>
+                                                <div style="padding:2px;"> <i class="el-icon-s-custom"></i> {{i.author}}
+                                                    </i>
+                                                </div>
+
+                                            </el-col>
+                                        </el-row>
+                                    </div>
+                                </div>
+                            </el-tab-pane>
+                            <el-tab-pane label="我的考试" name="second">
+                                <div class="showt" v-for="i in myexams">
+                                    <div @click="loadExam(i)" class="exams">
+                                        <el-row>
+                                            <el-col :span="1">
+                                                <div style="font-size:32px;"><i class="el-icon-monitor"></i>
+                                                </div>
+                                            </el-col>
+
+                                            <el-col :span="20">
+                                                <div style="float:left;font-size: 19px;">
+                                                    <el-link :underline="false">{{i.name}}</el-link>
+                                                    <br><span style="font-size:12px;">&nbsp;&nbsp; 时间: {{i.startdate}} ~ {{i.enddate}}</span>
+                                                </div>
+                                            </el-col>
+                                            <el-col :span="3">
+                                                <br>
+                                                <el-tag size="mini">{{i.type == 1? '分类模式':'随机模式'}}</el-tag>
+                                            </el-col>
+
+                                        </el-row>
+                                    </div>
+                                </div>
+                            </el-tab-pane>
+                            <el-tab-pane label="我的班级" name="third">
+                                <div class="r" style="padding:8px;">
+                                    <el-button size="small">邀请码加入</el-button>
+                                    <el-button size="small">搜索课程</el-button>
+                                </div>
+                                <el-table :data="classes" stripe style="width: 100%">
+                                    <el-table-column prop="date" label="日期" width="180">
+                                    </el-table-column>
+                                    <el-table-column prop="name" label="班级名称">
+                                    </el-table-column>
+                                    <el-table-column prop="teacher" label="教师" width="180">
+                                    </el-table-column>
+                                    <el-table-column prop="code" label="邀请码" width="180">
+                                    </el-table-column>
+                                    <el-table-column fixed="right" label="操作" width="100">
+                                        <template slot-scope="scope">
+                                            <el-button type="text" size="small">退出</el-button>
+                                        </template>
+                                    </el-table-column>
+                                </el-table>
+                            </el-tab-pane>
+                        </el-tabs>
+                    </template>
+                </el-main>
+            </el-container>
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 XXX. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<style>
+    .el-calendar-table .el-calendar-day {
+        height: 60px;
+        padding: 4px;
+    }
+</style>
+<script>
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                centerDialogVisible: false,
+                activeName: 'first',
+                date: new Date(),
+                currentDate: new Date(),
+                subjects: [
+                    { name: '数据结构', author: 'Kay', type: '题目集' },
+                    { name: 'C原因', author: 'Kay', type: '考试' },
+                    { name: '题目集三', author: 'Kay', type: '--' },
+                    { name: '题目集四', author: 'Kay', type: '--' },
+                ],
+                myexams: [
+                    {name:'xxx',startdate:'xxx',enddate:'xxx',type:1}
+                ],
+                classes: [
+                    { name: 'C语言班级', teacher: 'key', date: '2021-4-12', code: '' }
+                ],
+                username : getUserInfo().username
+            }
+        },
+        methods: {
+            reUrl(url) {
+                window.location.href = url;
+            },
+            loadExam(e){
+                if(e.type == 2){
+                    this.reUrl('exam.html?id='+e.id);
+                }
+                else{
+                    this.reUrl('subjects.html?id='+e.id);
+                }
+            }
+        },
+    })
+
+
+   request('GET', '/stuexams/' + getUserInfo().id, null, function (res) {
+      
+        res.data.forEach(e => {
+            e.startdate = textDate(e.startdate) + "  " + getNowDate(3,new Date(e.startdate));
+            e.enddate =   textDate(e.enddate) + "  " + getNowDate(3,new Date(e.enddate));
+        });
+          app.myexams = res.data;
+    }, null);
+
+
+</script>
+
+</html>

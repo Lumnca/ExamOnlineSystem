@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>班级人员</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="../js/vue/axios.min.js"></script>
+    <script src="../js/request.js"></script>
+    <script src="../js/date.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row>
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="reUrl('../index.html')">
+                                <span style="font-size:32px;"><i class="el-icon-platform-eleme"></i>线上考试平台</span>
+                            </el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="17">
+                        <div>
+                            &nbsp;
+                        </div>
+                    </el-col>
+                    <el-col :span="2">
+                        <div style="text-align: right;">
+                            {{username}}
+                        </div>
+                    </el-col>
+                    <el-col :span="1">
+                        <el-popover placement="bottom" width="100" trigger="click">
+                            <div>
+                                <div class="userbored">
+                                    <el-link href="account.html" icon="el-icon-user" :underline="false">个人中心</el-link>
+                                </div>
+                                <div class="userbored">
+                                    <el-link href="../index.html" icon="el-icon-back" :underline="false">退出</el-link>
+                                </div>
+                            </div>
+                            <el-button icon="el-icon-user-solid" slot="reference" circle></el-button>
+                        </el-popover>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-main id="main">
+                <div class="classheader">
+                    <el-button size="mini" @click="back"> 返回列表 </el-button>
+                    <el-button size="mini" @click="dialogFormVisible = true"> 添加学生 </el-button>
+                    <el-button size="mini" @click="batchAdd"> 批量添加 </el-button>
+                    <el-button size="mini" type="danger" @click="delClass()">删除班级</el-button>
+
+
+                    <el-dialog v-if="!batch" title="添加学生" :visible.sync="dialogFormVisible">
+                        <el-form :model="form">
+                            <el-form-item label="学生ID或者姓名" label-width="200px">
+                                <el-input v-model="form.name" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <br>
+                            <el-button size="mini" @click="queryStuentE(form.name)">查询</el-button>
+                            &nbsp; &nbsp; 查询结果: <span v-if="is_query"> <i class="el-icon-loading"></i></span>
+                            <span v-else>{{queryStuent}}</span>
+                        </el-form>
+                        <div>
+
+                        </div>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="dialogFormVisible = false">取 消</el-button>
+                            <el-button type="primary" @click="addclasstu(form.name)">添 加</el-button>
+                        </div>
+                    </el-dialog>
+
+
+                    <el-dialog v-else title="批量添加" :visible.sync="dialogFormVisible">
+                        <el-form :model="form">
+                            <el-form-item label="学号组" label-width="200px">
+                                <el-input v-model="form.name" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <br>
+                            <el-button size="mini" @click="queryStuentE(form.name)">查询</el-button>
+                        </el-form>
+                    </el-dialog>
+                </div>
+                <div v-if="!batch">
+                    <el-table
+                        :data="peoples.filter(data => !search || data.name.toLowerCase().includes(search.toLowerCase()))"
+                        style="width: 100%">
+                        <el-table-column label="加入时间" prop="joinDate">
+                        </el-table-column>
+                        <el-table-column label="名称" prop="name">
+                        </el-table-column>
+                        <el-table-column align="right">
+                            <template slot="header" slot-scope="scope">
+                                <el-input v-model="search" size="mini" placeholder="输入关键字搜索" />
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <br>
+                    <div class="block">
+                        <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
+                            :current-page.sync="currentPage" :page-size="10" layout="prev, pager, next, jumper"
+                            :total="peoples.length">
+                        </el-pagination>
+                    </div>
+                </div>
+                <dvi v-else>
+                    <el-table
+                        :data="batchpeos.filter(data => !search || data._username.toLowerCase().includes(search.toLowerCase()))"
+                        style="width: 100%" @selection-change="handleSelectionChange">
+                        <el-table-column type="selection" width="55">
+                        </el-table-column>
+                        <el-table-column label="学号" prop="_no">
+                        </el-table-column>
+                        <el-table-column label="名称" prop="_username">
+                        </el-table-column>
+                        <el-table-column label="状态" >
+                            <template slot-scope="scope">
+                                <el-tag v-if="scope.row._exist" type="success" size="medium">
+                                    已存在
+                                </el-tag>
+                                <el-tag v-else  type="danger" size="medium">
+                                    未存在
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column align="right">
+                            <template slot="header" slot-scope="scope">
+                                <el-input v-model="search" size="mini" placeholder="输入关键字搜索" />
+                            </template>
+                        </el-table-column>
+                    </el-table>
+
+                    <br>
+
+                    <div class="block">
+                        <el-pagination 
+                            :current-page.sync="currentPage" :page-size="10" layout="prev, pager, next, jumper"
+                            :total="batchpeos.length">
+                        </el-pagination>
+                    </div>
+                    <br>
+                    <div style="text-align:center;">
+                            <el-button type="primary" @click="addbutchs"> 批量添加 </el-button>
+                    </div>
+                </dvi>
+            </el-main>
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 XXX. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<script>
+    let cid = location.search.split('=').pop();
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                search: '',
+                isLoginCheck: '未登录',
+                islogin: false,
+                loginForm: {
+                    id: '',
+                    result: 0,
+                    pass: ''
+                },
+                username: getUserInfo().username,
+                centerDialogVisible: false,
+                date: new Date(),
+                currentDate: new Date(),
+                peoples: [],
+                currentPage: 0,
+                form: {
+                    name: ''
+                },
+                dialogFormVisible: false,
+                is_query: true,
+                queryStuent: '',
+                batch: false,
+                batchpeos: [],
+                multipleSelection: []
+            }
+        },
+        methods: {
+            reUrl(url) {
+                window.location.href = url;
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+            },
+            queryStuentE(id) {
+                if (this.batch) {
+                    request('GET', '/stus/' + id+"?cid="+cid, null, function (res) {
+                        app.$message("共找到" + res.data.length + "条数据");
+                        app.batchpeos = res.data;
+                    }, null)
+                    this.dialogFormVisible = false;
+                }
+                else {
+                    request('GET', '/searchstu/' + id, null, function (res) {
+                        if (!notnull(res.data._username)) {
+                            app.queryStuent = '无结果';
+                            app.is_query = true;
+                            return;
+                        }
+                        app.is_query = false;
+                        app.queryStuent = res.data._username;
+                    }, null)
+                }
+
+            },
+            addclasstu(id) {
+                if (!this.is_query) {
+                    request('POST', '/addclastu', { cid: cid, sid: id, date: getNowDate(1) }, function (res) {
+                        app.$message(res.data.message);
+                        relaodView(2000);
+                    }, null);
+                    this.dialogFormVisible = false;
+                }
+                else {
+                    app.$message('无效id');
+                }
+            },
+            delclastu(sid, cid) {
+                warnconfirm(app, '是否移除改学生？', function () {
+                    request('POST', '/delclastu', { sid: sid, cid: cid }, function (res) {
+                        app.$message(res.data.message);
+                        relaodView(2000);
+                    }, null)
+                })
+            },
+            delClass() {
+                warnconfirm(app, '是否删除班级以及所有学生？', function () {
+                    request('POST', '/delclass/' + cid, null, function (res) {
+                        app.$message(res.data.message);
+                        relaodView(2000, 'class.html');
+                    }, null)
+                })
+            },
+            batchAdd() {
+                this.batch = true;
+                this.dialogFormVisible = true;
+            },
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+            },
+            addbutchs(){
+                let pd = [];
+                this.multipleSelection.forEach(e => {
+                    let _e = {sid:0,cid:0,joindate : ''};
+                    _e.sid = e._id;
+                    _e.cid = cid;
+                    _e.date = getNowDate(1);
+                    pd.push(_e);
+                });
+
+                request('POST', '/butchaddcs', {data : pd}, function (res) {
+                        app.$message(res.data.message);
+                        relaodView(2000, 'class.html');
+                }, null)
+            },
+            back(){
+                if(this.batch){
+                    this.batch = false
+                }
+                else{
+                    this.reUrl('class.html?id='+cid);
+                }
+                
+            }
+
+        },
+    })
+    app.username = getUserInfo().username;
+
+    request('GET', "/clstudents/" + cid, null, function (res) {
+        app.peoples = res.data;
+    }, null);
+</script>
+
+</html>

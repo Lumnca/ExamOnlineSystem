@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>线上考试</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="../js/vue/axios.min.js"></script>
+    <script src="../js/date.js"></script>
+    <script src="../js/request.js"></script>
+    <script src="/webjars/jquery/jquery.min.js"></script>
+    <script src="/webjars/sockjs-client/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/stomp.min.js"></script>
+    <script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row>
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="reUrl('../index.html')">
+                                <span style="font-size:32px;"><i class="el-icon-platform-eleme"></i>线上考试平台</span>
+                            </el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="17">
+                        <div>
+                            &nbsp;
+                        </div>
+                    </el-col>
+                    <el-col :span="2">
+                        <div style="text-align: right;">
+                            {{username}}
+                        </div>
+                    </el-col>
+                    <el-col :span="1">
+                        <el-popover placement="bottom" width="100" trigger="click">
+                            <div>
+                                <div class="userbored">
+                                    <el-link href="account.html" icon="el-icon-user" :underline="false">个人中心</el-link>
+                                </div>
+                                <div class="userbored">
+                                    <el-link href="/logout" icon="el-icon-back" :underline="false">退出</el-link>
+                                </div>
+                            </div>
+                            <el-button icon="el-icon-user-solid" slot="reference" circle></el-button>
+                        </el-popover>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-main id="main">
+                <div v-for="(i) in Math.ceil(users.length/5)">
+                    <el-col :span="5" v-for="(j) in 5" :key="j" v-if="users[(i-1)*5+j-1]!=null"
+                        style="margin-top:20px;margin-left: 60px;">
+                        <el-card :body-style="{ padding: '7px 12px'}">
+                            <div>
+                                <div style="text-align:left;">
+                                    <h2>
+                                        <span><i class="el-icon-postcard"></i></span> {{users[(i-1)*5+j-1].no}}
+                                        &nbsp; &nbsp;
+                                        <span><i class="el-icon-user"></i></span> {{users[(i-1)*5+j-1].name}}
+
+                                    </h2>
+                                </div>
+                                <div class="user">
+                                    <div>
+                                        <span><i class="el-icon-loading"></i> {{users[(i-1)*5+j-1].message}}</span>
+                                    </div>
+                                    <div>
+                                        <span style="color:green" v-if="users[(i-1)*5+j-1].state == 1"><i
+                                                class="el-icon-success"></i> 在线</span>
+                                        <span style="color:red" v-else><i class="el-icon-error"> 不在线</i></span>
+                                    </div>
+                                    &nbsp;&nbsp;
+                                    <span><i class="el-icon-collection-tag"></i>共 {{users[(i-1)*5+j-1].messages.length }} 条记录</span>
+                                    <div class="bottom clearfix">
+                                        <el-button type="text" class="button" @click="sendMsg(users[(i-1)*5+j-1].name)">
+                                            发送消息
+                                        </el-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </el-card>
+                    </el-col>
+                </div>
+                <el-dialog title="发送消息" :visible.sync="dialogFormVisible">
+                    <el-form :model="form">
+                        <el-form-item label="消息主体">
+                            <el-input v-model="form.msg" autocomplete="off"></el-input>
+                        </el-form-item>
+                    </el-form>
+                    <div slot="footer" class="dialog-footer">
+                        <el-button @click="dialogFormVisible = false">取 消</el-button>
+                        <el-button type="primary" @click="sendAlertMsg(form.msg)">确 定</el-button>
+                    </div>
+                </el-dialog>
+            </el-main>
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 XXX. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<script src="../js/scoket.js"></script>
+<script>
+    let msgbody = { to: '', content: '', from: getUserInfo().username };
+
+
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                centerDialogVisible: false,
+                username: getUserInfo().username,
+                date: new Date(),
+                currentDate: new Date(),
+                exams: [
+                    { date: '2021-1-12', name: '测试1', state: 1 },
+                    { date: '2021-2-12', name: '测试2', state: 2 },
+                    { date: '2021-3-13', name: '测试3', state: 3 },
+                ],
+                dialogFormVisible: false,
+                testform: {
+                    date: '',
+                    name: '',
+                },
+                users: [],
+                form: {
+                    msg: '',
+                    name: ''
+                },
+                msg: ''
+            }
+        },
+        methods: {
+            reUrl(url) {
+                window.location.href = url;
+            },
+            sendMsg(name) {
+                this.dialogFormVisible = true;
+                this.form.name = name;
+            },
+            sendAlertMsg(msg) {
+                this.dialogFormVisible = false;
+                msgbody.to = this.form.name;
+                msgbody.content = msg;
+                sendMeg(SocketBoredName, JSON.stringify(msgbody));
+            }
+        },
+    })
+
+
+
+
+
+    request('GET', "/clstudents/1", null, function (res) {
+        res.data.forEach(e => {
+            e.messages = [];
+            e.state = 0;
+            e.tid = 0;
+            e.message  = '无状态'
+        });
+        app.users = res.data;
+    });
+    connect(function (msg) {
+        if (msg.content == 'alive') {
+            app.users.forEach((e) => {
+                if (e.name == msg.from) {
+                    e.state = 1;
+                    clearTimeout(e.tid);
+                    e.tid = setTimeout(() => {
+                        e.state = 0;
+                    }, 20000);
+                }
+            })
+        }
+        else {
+            app.msg = msg.content;
+            //app.$message(app.msg);
+            app.users.forEach((e) => {
+                if (e.name == msg.from) {
+                    e.messages.push(app.msg);
+                    e.message = app.msg;
+                }
+            })
+        }
+
+    });
+</script>
+
+</html>

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>数据统计</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.0.2/dist/echarts.min.js"></script>
+    <script src="../js/date.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row :gutter="20">
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="reUrl('../index.html')"><span style="font-size:32px;"><i
+                                        class="el-icon-platform-eleme"></i>线上考试平台</span></el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="13">
+                        <div>
+                            {{date}}
+                        </div>
+                    </el-col>
+                    <el-col :span="5">
+                        <el-input v-model="search" placeholder="输入关键字搜索" />
+                    </el-col>
+                    <el-col :span="1" style="margin-left:-25px;">
+                        <el-button icon="el-icon-search" circle></el-button>
+                    </el-col>
+                    <el-col :span="1" style="float:right;">
+                        <div class="grid-content bg-purple" v-if="islogin">
+                            <el-dropdown>
+                                <el-avatar :size="60" src="https://empty">
+                                    <img src="https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png" />
+                                </el-avatar>
+                                <el-dropdown-menu slot="dropdown">
+                                    <el-dropdown-item>{{user.name}}</el-dropdown-item>
+                                    <el-dropdown-item>
+                                        <el-button type="text" @click="reUrl('../index.html')"><span><i
+                                                    class="el-icon-suitcase"></i>用户中心</span></el-button>
+                                    </el-dropdown-item>
+                                    <el-dropdown-item>
+                                        <el-button type="text" @click="out()"><span><i
+                                                    class="el-icon-back"></i>登出</span></el-button>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </div>
+                        <div v-else>
+                            <el-button type="text" @click="centerDialogVisible = true"><i
+                                    class="el-icon-user-solid"></i> {{isLoginCheck}} </el-button>
+
+
+                            <el-dialog title="登录" :visible.sync="centerDialogVisible" width="30%" center>
+
+                                <el-form :model="loginForm" status-icon :rules="rules" ref="loginForm"
+                                    label-width="100px" class="demo-loginForm">
+
+                                    <el-form-item label="账号" prop="id">
+                                        <el-input type="text" v-model="loginForm.id" autocomplete="off"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="密码" prop="pass">
+                                        <el-input type="password" v-model="loginForm.pass" autocomplete="off">
+                                        </el-input>
+                                    </el-form-item>
+
+                                    <div class="block" style="padding:48px;">
+                                        <span class="demonstration">人机验证,请将滑块拉到<b> {{loginForm.result}} </b></span>
+                                        <el-slider v-model="loginForm.number" :step="1" :max="10" :min=0 show-stops>
+                                        </el-slider>
+                                    </div>
+
+
+                                    <el-form-item>
+                                        <el-button type="primary" @click="submitForm('loginForm')">登录</el-button>
+                                        <el-button @click="resetForm('loginForm')">重置</el-button>
+
+                                        <span style="margin:16px 54px;font-size: 16px;"><a href="#">忘记密码?</a> | <a
+                                                href="#">注册账号</a></span>
+                                    </el-form-item>
+                                </el-form>
+
+                            </el-dialog>
+                        </div>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-main id="main">
+                <el-tabs v-model="activeName" @tab-click="handleClick">
+                    <el-tab-pane label="考试表格" name="first">
+                        <div>
+                            <h2>{{exam.name}}</h2>
+                            <el-table :data="exampeopleinfor" border :summary-method="getSummaries" show-summary
+                                style="width: 100%; margin-top: 20px">
+                                <el-table-column prop="name" label="姓名">
+                                </el-table-column>
+                                <el-table-column prop="date" label="提交时间" sortable>
+                                </el-table-column>
+                                <el-table-column label="状态" sortable>
+                                    <template slot-scope="scope">
+                                        <el-tag v-if="scope.row.state === 1" type="success">正常</el-tag>
+                                        <el-tag v-else-if="scope.row.state === 2" type="warning">作弊</el-tag>
+                                        <el-tag v-else-if="scope.row.state === 0">缺席</el-tag>
+                                        <el-tag v-else type="info">其他</el-tag>
+                                    </template>
+                                </el-table-column sortable>
+                                <el-table-column prop="score" sortable label="总分">
+                                </el-table-column>
+                                <el-table-column align="right">
+                                    <template slot-scope="scope">
+                                        <el-button size="mini" @click="showInfor(scope.$index, scope.row)">
+                                            查看信息
+                                        </el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </div>
+                    </el-tab-pane>
+                    <el-tab-pane label="部分" name="second">
+                        <div>
+                            <el-row :gutter="20">
+                                <el-col :span="12">
+                                    <div id="cy" style="width: 800px;height:600px;"></div>
+                                </el-col>
+                                <el-col :span="12">
+                                    <div id="fb" style="width: 800px;height:600px;"></div>
+                                </el-col>
+                            </el-row>
+                        </div>
+                    </el-tab-pane>
+                    <el-tab-pane label="试题" name="third">
+                        <div>
+                            <el-row :gutter="20">
+                                <el-col :span="24">
+                                    <div id="st" style="width: 1600px;height:700px;"></div>
+                                </el-col>
+                            </el-row>
+                        </div>
+                    </el-tab-pane>
+                </el-tabs>
+
+            </el-main>
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 XXX. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<script>
+    var checkId = (rule, value, callback) => {
+        if (!value) {
+            return callback(new Error('ID不能为空'));
+        }
+        setTimeout(() => {
+            if (value.indexOf("'") != -1 || value.indexOf("#") != -1 || value.indexOf(" ") != -1) {
+                callback(new Error('请不要输入特殊字符'));
+            } else {
+                callback();
+            }
+        }, 1000);
+    };
+    var checkPass = (rule, value, callback) => {
+        if (!value) {
+            return callback(new Error('密码不能为空'));
+        }
+        setTimeout(() => {
+            if (value.indexOf("'") != -1 || value.indexOf("#") != -1 || value.indexOf(" ") != -1) {
+                callback(new Error('请不要输入特殊字符'));
+            } else {
+                callback();
+            }
+        }, 1000);
+    };
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                search: '',
+                isLoginCheck: '未登录',
+                islogin: false,
+                loginForm: {
+                    id: '',
+                    result: 0,
+                    pass: ''
+                },
+                centerDialogVisible: false,
+                rules: {
+                    id: [
+                        { validator: checkId, trigger: 'blur' }
+                    ],
+                    pass: [
+                        { validator: checkPass, trigger: 'blur' }
+                    ]
+                },
+                date: new Date(),
+                currentDate: new Date(),
+                exam: {
+                    name: '第一次测试',
+                    date: '2020-12-24 12:00',
+                    peopletotal: 10,
+                    peopleuse: 9,
+                    type: '',
+                    subject: [
+                        { id: 1, score: 4, trueNum: 3, falseNum: 1 },
+                        { id: 1, score: 4, trueNum: 2, falseNum: 2 },
+                        { id: 1, score: 4, trueNum: 4, falseNum: 0 },
+                        { id: 1, score: 4, trueNum: 2, falseNum: 2 },
+                        { id: 1, score: 4, trueNum: 0, falseNum: 4 },
+                        { id: 1, score: 4, trueNum: 1, falseNum: 3 },
+                        { id: 1, score: 4, trueNum: 3, falseNum: 1 },
+                        { id: 1, score: 4, trueNum: 3, falseNum: 1 },
+                        { id: 1, score: 4, trueNum: 2, falseNum: 2 },
+                        { id: 1, score: 4, trueNum: 3, falseNum: 1 },
+                    ]
+
+                },
+                exampeopleinfor: [
+                    {
+                        name: 'Abo', date: '2020-12-24 12:44', score: 94, state: 1, chapters: [
+                            { name: '单选', score: 42 }, { name: '大题', score: 52 }
+                        ], infor: '无'
+                    },
+                    {
+                        name: 'Kay', date: '2020-12-24 12:47', score: 84, state: 1, chapters: [
+                            { name: '单选', score: 32 }, { name: '大题', score: 52 }
+                        ], infor: '无'
+                    },
+                    {
+                        name: 'Bob', date: '2020-12-24 13:02', score: 75, state: 1, chapters: [
+                            { name: '单选', score: 40 }, { name: '大题', score: 35 }
+                        ], infor: '无'
+                    },
+                    {
+                        name: 'Tom', date: '2020-12-24 14:00', score: 0, state: 0, chapters: [
+                            { name: '单选', score: 40 }, { name: '大题', score: 35 }
+                        ], infor: '无'
+                    },
+                ],
+                dialogFormVisible: false,
+                dialogFormVisible2: false,
+                activeName: 'first'
+            }
+        },
+        methods: {
+
+            submitForm(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        alert('submit!');
+                    } else {
+                        console.log('error submit!!');
+                        return false;
+                    }
+                });
+            },
+            resetForm(formName) {
+                this.$refs[formName].resetFields();
+            },
+            reUrl(url) {
+                window.location.href = url;
+            },
+            getSummaries(param) {
+                const { columns, data } = param;
+                const sums = [];
+                let num = 0;
+                columns.forEach((column, index) => {
+                    if (index === 0) {
+                        sums[index] = '平均分';
+                        return;
+                    }
+                    const values = data.map(item => Number(item[column.property]));
+                    if (!values.every(value => isNaN(value))) {
+                        sums[index] = values.reduce((prev, curr) => {
+                            const value = Number(curr);
+                            num++;
+                            if (!isNaN(value)) {
+                                return prev + curr;
+                            } else {
+                                return prev;
+                            }
+                        }, 0);
+                        sums[index] = (sums[index] / (num)).toFixed(2);
+                        sums[index] += ' 分';
+                    } else {
+                        sums[index] = ' ';
+                    }
+                });
+
+                return sums;
+            },
+            handleClick(tab, event) {
+                console.log(tab, event);
+            }
+        },
+    })
+
+    //---------------------------------------------------------------
+    var chartDom = document.getElementById('cy');
+    var myChart = echarts.init(chartDom);
+    myChart.showLoading();
+    var option = {
+        title: {
+            text: '分数组成',
+            left: 'center'
+        },
+        tooltip: {
+            trigger: 'item'
+        },
+        legend: {
+            orient: 'vertical',
+            left: 'left',
+        },
+        series: [
+            {
+                name: '成绩组成',
+                type: 'pie',
+                radius: '50%',
+                data: [],
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                }
+            }
+        ]
+    };
+    let notPass = 0;
+    let Pass = 0;
+    app.exampeopleinfor.forEach((e) => {
+        if (e.score < 60) {
+            notPass++;
+        }
+        else if (e.score >= 60) {
+            Pass++;
+        }
+    });
+    option.series[0].data.push({ value: notPass, name: '不及格' });
+    option.series[0].data.push({ value: Pass, name: '及格' });
+    myChart.hideLoading();
+    myChart.setOption(option);
+    //------------------------------------------------------------------
+    var chartDom2 = document.getElementById('fb');
+    var myChart2 = echarts.init(chartDom2);
+    myChart2.showLoading();
+    var option2 = {
+        title: {
+            text: '分数组成',
+            left: 'center'
+        },
+        tooltip: {
+            trigger: 'item'
+        },
+        legend: {
+            orient: 'vertical',
+            left: 'left',
+        },
+        series: [
+            {
+                name: '成绩组成',
+                type: 'pie',
+                radius: '50%',
+                data: [],
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                }
+            }
+        ]
+    };
+    let s1 = 0;
+    let s2 = 0;
+    let s3 = 0;
+    let s4 = 0;
+    app.exampeopleinfor.forEach((e) => {
+        if (e.score < 60) {
+            s1++;
+        }
+        else if (e.score >= 60 && e.score < 80) {
+            s2++;
+        }
+        else if (e.score >= 80 && e.score < 90) {
+            s3++;
+        }
+        else {
+            s4++;
+        }
+    });
+    option2.series[0].data.push({ value: s1, name: '不及格(<60)' });
+    option2.series[0].data.push({ value: s2, name: '良好(60~80)' });
+    option2.series[0].data.push({ value: s3, name: '中等(80~90)' });
+    option2.series[0].data.push({ value: s4, name: '优秀(90~100)' });
+    myChart2.hideLoading();
+    myChart2.setOption(option2);
+    //-----------------------------------------------------------------------------
+    var chartDom3 = document.getElementById('st');
+    var myChart3 = echarts.init(chartDom3);
+    var option3;
+
+    var titleArray = [];
+    var dataArray = [];
+    app.exam.subject.forEach((e, i) => {
+        titleArray.push("第" + (i + 1) + "题");
+        dataArray.push(e.trueNum);
+    })
+
+
+    option3 = {
+        title: {
+            text: '题目正确率',
+            left: 'center'
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {            // 坐标轴指示器，坐标轴触发有效
+                type: 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+            }
+        },
+        xAxis: {
+            type: 'category',
+            data: titleArray
+        },
+        yAxis: {
+            type: 'value'
+        },
+        series: [{
+            name: '正确人数',
+            data: dataArray,
+            type: 'bar',
+            showBackground: true,
+            backgroundStyle: {
+                color: 'rgba(180, 180, 180, 0.2)'
+            }
+        }]
+    };
+
+    myChart3.setOption(option3);
+</script>
+
+</html>

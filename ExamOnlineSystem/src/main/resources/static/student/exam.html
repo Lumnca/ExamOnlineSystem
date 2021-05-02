@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>考试</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="../js/vue/axios.min.js"></script>
+    <script src="../js/date.js"></script>
+    <script src="../js/request.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/wangeditor@latest/dist/wangEditor.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row :gutter="20">
+                    <el-col :span="8">
+                        <div class="conutdown" style="float:left;">
+                            姓名: 刘闽川
+                        </div>
+                    </el-col>
+                    <el-col :span="8" class="conutdown">
+                        <div>
+                            <i class="el-icon-alarm-clock"></i> : {{showCountDownTime}}
+                        </div>
+                    </el-col>
+                    <el-col :span="8">
+                        <div style="float: right;;">
+                            <el-button size="mini" round @click="exitExam()">退出考试</el-button>
+                        </div>
+                    </el-col>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-container>
+                <el-aside width="360px">
+                    <div class="el-calendar" style="height:400px; overflow: auto;">
+                        <div class="el-calendar__header">
+                            <div class="el-calendar__title">
+                                <i class="el-icon-reading"></i> 完成度: {{complete}}
+                            </div>
+                            <div class="el-calendar__button-group">
+                                <div class="el-button-group">
+                                    <button type="button" @click="nextNoComleteSubject"
+                                        class="el-button el-button--plain el-button--mini">
+                                        <span>
+                                            下一个未做
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="el-calendar__body">
+                            <table cellspacing="0" cellpadding="0" class="el-calendar-table">
+                                <tbody>
+                                    <tr class="el-calendar-table__row" v-for="i in Math.ceil(exam.length/5)">
+                                        <td class="current" v-for="j in 5">
+                                            <div v-if="sxs[(i-1)*5+j-1]==1&&sxs[(i-1)*5+j-1]!=null"
+                                                class="el-calendar-day" @click="changeSubject((i-1)*5+j-1)">
+                                                <span style="font-size: 20px;">{{(i-1)*5+j}}</span>
+
+                                            </div>
+                                            <div v-else-if="sxs[(i-1)*5+j-1]==0&&sxs[(i-1)*5+j-1]!=null"
+                                                class="el-calendar-day tuse" @click="changeSubject((i-1)*5+j-1)">
+                                                <span style="font-size: 20px;">{{(i-1)*5+j}}</span>
+
+                                            </div>
+                                            <div v-else-if="sxs[(i-1)*5+j-1]==2&&sxs[(i-1)*5+j-1]!=null"
+                                                class="el-calendar-day tquse" @click="changeSubject((i-1)*5+j-1)">
+                                                <span style="font-size: 20px;">{{(i-1)*5+j}}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="el-calendar" style="height:400px; overflow: auto;">
+                        <div class="el-calendar__header">
+                            <div class="el-calendar__title">
+                                <div class="el-button-group">
+                                    <button type="button" @click="drawer1 = true"
+                                        class="el-button el-button--plain el-button--mini">
+                                        <span class="el-icon-warning">
+                                            注意事项
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="el-calendar__body">
+                            <div class="el-calendar__button-group">
+
+                            </div>
+                        </div>
+                    </div>
+                </el-aside>
+                <el-main id="main">
+                    <div>
+                        <div>
+                            <div class="exh">
+                                <el-row>
+                                    <el-col :span="2">
+                                        <span>
+                                            <el-button type="text" v-if="no!=0" @click="prvSubjuct()"><i
+                                                    class="el-icon-back"></i> 上一题</el-button>
+                                        </span>
+                                    </el-col>
+                                    <el-col :span="20">
+                                        <el-button type="text" @click="drawer = true"> 第{{no+1}}题</el-button>
+                                    </el-col>
+                                    <el-col :span="2">
+                                        <el-button type="text" v-if="no < exam.length-1" @click="nextSubject()">下一题 <i
+                                                class="el-icon-right"></i> </el-button>
+                                    </el-col>
+                                </el-row>
+                            </div>
+                            <div class="ext" v-html="subject.title">
+
+                            </div>
+                            <el-drawer title="题目详情" :visible.sync="drawer" direction="ttb" :before-close="handleClose">
+                                <div class="ext" v-html="subject.title">
+
+                                </div>
+                            </el-drawer>
+                            <el-drawer title="注意事项" :visible.sync="drawer1" direction="ttb" :before-close="handleClose"
+                                size="100%">
+                                <div class="exw">
+                                    <p>《数据库原理与应用》上机考试说明：</p>
+                                    <p><strong>考试题型</strong>包括：单选题，填空题，判断题，SQL语句题，范式题，数据库设计题</p>
+                                    <p>其中<strong>填空题</strong>的答案里<strong>不能</strong>出现空格（若出现空格则将判为<strong>错误</strong>，请务必注意！）
+                                    </p>
+                                    <p>本试卷中主要出现五种类型的题：<strong>填空题</strong>，<strong>SQL语句题</strong>，<strong>数据库设计题中画ER图部分</strong>，<strong>数据库设计题中的表设计部分</strong>，<strong>关系代数</strong>。
+                                    </p>
+                                    <p>其<strong>主要目的</strong>是让同学们了解这五种类型的题目的完成过程，请同学们务必<strong>熟练掌握其操作流程</strong>，以避免在考试过程中因为操作不熟练而损失考试时间。
+                                    </p>
+                                    <p>在正式试卷中，主观题中<strong>不会出现</strong>该测试试卷中的“重要提示”部分，请务必要提前<strong>熟练掌握</strong>题目解答流程！
+                                    </p>
+                                    <p>SQL语句题需要<strong>特别注意</strong>的是：</p>
+                                    <p>1、括号，单引号，逗号，等号等符号，<strong>必须在英文状态下输入</strong>。</p>
+                                    <p>2、基于系统底层判断规则，请务必在写SQL语句时，使用<strong>小写</strong>书写<strong>列名</strong>和<strong>表名</strong>！
+                                    </p>
+                                    <p>3、凡是要求在Select子句中列出的<strong>统计列</strong>（比如平均成绩，总学分等），都要<strong>严格按题目要求为列命别名</strong>，否则会判为错误！
+                                    </p>
+                                    <p>PS：SQL题目比较多，大家可以借助这些题多复习一下。考试题目中SQL语句题对应的<strong>表结构会不一样</strong>，因此希望大家在理解的基础上完成语句的书写。
+                                    </p>
+                                    <p>4、在SQL语句题中，若出现了语法错误，可以看到错误提示，考试时，在<strong>时间允许的情况下</strong>，大家可以参考提示修改你的语句</p>
+                                    <p><img alt="SQL语句题错误自检方法.png"
+                                            src="https://images.ptausercontent.com/4066101b-611a-4b3d-adfa-c2b6e1d7faeb.png">
+                                    </p>
+                                    <p><strong>祝同学们考试顺利！</strong></p>
+                                </div>
+                            </el-drawer>
+                        </div>
+                        <br>
+                        <div>
+                            <div class="e" style="background:#67C23A;font-size: 22px;">
+                                作答区 <span style="float:right;">
+                                    <el-dropdown @command="changefz">
+                                        <span class="el-dropdown-link">
+                                            字号<i class="el-icon-arrow-down el-icon--right"></i>
+                                        </span>
+                                        <el-dropdown-menu slot="dropdown">
+                                            <el-dropdown-item command="16">16px</el-dropdown-item>
+                                            <el-dropdown-item command="18">18px</el-dropdown-item>
+                                            <el-dropdown-item command="20">20px</el-dropdown-item>
+                                            <el-dropdown-item command="24">24px</el-dropdown-item>
+                                            <el-dropdown-item command="28">28px</el-dropdown-item>
+                                        </el-dropdown-menu>
+                                    </el-dropdown>
+                                </span>
+                            </div>
+                            <div class="exd">
+                                <div v-if="subject.type == 1">
+                                    <div class="exz" v-if="subject.style == 1">
+                                        <el-row>
+                                            <el-col :span="6" v-for="op,i in subject.options">
+                                                <el-tooltip class="item" effect="dark" :content="op" placement="top"
+                                                    :disabled="(op.length < 16)">
+                                                    <el-radio v-model="subject.select" :label="i" class="exz"
+                                                        @change="isSelect(no)">
+                                                        <span
+                                                            :style="fontsize">{{ op.length>16? (op.substr(0,16) + "..." ) : op   }}</span>
+                                                    </el-radio>
+                                                </el-tooltip>
+                                            </el-col>
+                                        </el-row>
+                                    </div>
+                                    <div class="exz" v-else-if="subject.style == 2">
+                                        <el-col style="margin-top:12px;" :span="12" v-for="op,i in subject.options">
+                                            <el-tooltip class="item" effect="dark" :content="op" placement="top"
+                                                :disabled="(op.length < 32)">
+                                                <el-radio v-model="subject.select" :label="i" @change="isSelect(no)">
+                                                    <span :style="fontsize">
+                                                        {{ op.length>32? (op.substr(0,32) + "..." ) : op   }}</span>
+                                                </el-radio>
+                                            </el-tooltip>
+                                        </el-col>
+                                    </div>
+                                    <div class="exz" v-else>
+                                        <el-col style="margin-top:12px;" :span="24" v-for="op,i in subject.options">
+                                            <el-tooltip class="item" effect="dark" :content="op" placement="top"
+                                                :disabled="(op.length < 64)">
+                                                <el-radio v-model="subject.select" :label="i" @change="isSelect(no)">
+                                                    <span :style="fontsize">
+                                                        {{ op.length>64? (op.substr(0,64) + "..." ) : op   }}</span>
+                                                </el-radio>
+                                            </el-tooltip>
+                                        </el-col>
+                                    </div>
+                                </div>
+                                <div v-else-if="subject.type == 2" style="text-align:left;padding: 16px;">
+                                    <el-row>
+                                        <el-col :span="12">
+                                            <el-radio style="color:#67C23A" v-model="subject.select"
+                                                @change="isSelect(no)" label="1"><i class="el-icon-check"></i> 正确
+                                            </el-radio>
+                                        </el-col>
+                                        <el-col :span="12">
+                                            <el-radio style="color:red;" v-model="subject.select" @change="isSelect(no)"
+                                                label="2"><i class="el-icon-close"></i> 错误</el-radio>
+                                        </el-col>
+                                    </el-row>
+                                </div>
+                                <div v-else-if="subject.type == 3" style="height:400px;text-align:left;">
+                                    <div id="txt" v-loading="loading" @click="checkEditor">
+
+                                    </div>
+                                </div>
+                                <div v-else>
+                                    <el-form label-position="left" label-width="80px">
+                                        <el-form-item v-for="i in subject.number" :label="'第'+i+'空'">
+                                            <el-input v-model="subject.input[i]" @blur="checkTK(subject)"></el-input>
+                                        </el-form-item>
+                                    </el-form>
+                                </div>
+                            </div>
+                            <br>
+                            <div style="float:right;">
+                                <el-button type="primary" @click="addflag(no)">添加标记</el-button>
+                            </div>
+                        </div>
+                    </div>
+                </el-main>
+            </el-container>
+
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 XXX. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<style>
+    .el-radio__label {
+        display: inline;
+        font-size: 20px;
+    }
+
+    .el-calendar-table .el-calendar-day {
+        height: 100%;
+    }
+</style>
+<script>
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                showCountDownTime: '00:00:00',
+                sxs: [],
+                userdevice: {
+                    ip: "",
+                    city: '',
+                },
+                radio: 3,
+                subject: {
+
+                },
+                no: 0,
+                exam: exam,
+                editor: {},
+                fontsize: {
+                    'font-size': '16px'
+                },
+                completeSubject: 0,
+                loading: true,
+                drawer: false,
+                drawer1: false
+            }
+        },
+        methods: {
+            addtitle(form) {
+                console.log(form);
+                this.exam.chapters.push({ name: form.name, style: form.style, subject: [], total: 0 });
+            },
+            reUrl(url) {
+                window.location.href = url;
+            },
+            handleClose(done) {
+                this.$confirm('确认关闭？')
+                    .then(_ => {
+                        done();
+                    })
+                    .catch(_ => { });
+            },
+            editEnd(i) {
+                this.sxs[i] = 0;
+                console.log(i);
+            },
+            prvSubjuct() {
+                this.no--;
+                this.subject = exam[this.no];
+                this.isEditor();
+            },
+            nextSubject() {
+                this.no++;
+                this.subject = exam[this.no];
+                this.isEditor();
+            },
+            isSelect(i) {
+                if (this.sxs[i] == 1) {
+                    this.sxs[i] = 0;
+                    this.completeSubject++;
+                }
+            },
+            nextNoComleteSubject() {
+                for (let index = 0; index < this.sxs.length; index++) {
+                    if (this.sxs[index] == 1) {
+                        this.subject = exam[index];
+                        this.no = index;
+                        this.isEditor();
+                        break;
+                    }
+                }
+            },
+            changeSubject(i) {
+                this.no = i;
+                this.subject = exam[this.no];
+                this.isEditor();
+            },
+            addflag(no) {
+                this.sxs[no] = 2;
+                this.$message({
+                    type: 'success',
+                    message: '添加成功!'
+                })
+            },
+            exitExam() {
+                let ok = true;
+                this.sxs.forEach(e => {
+                    if (e == 1) {
+                        ok = false;
+                    }
+                });
+                this.$alert(ok ? '已经全部完成是否提交?' : '存在未完成的题目是否提交?', '提交试卷', {
+                    confirmButtonText: '确定',
+                    callback: action => {
+                        this.$message({
+                            type: 'info',
+                            message: `action: ${action}`
+                        });
+                    }
+                });
+            },
+            isEditor() {
+                if (exam[this.no].type == 3) {
+                    setTimeout(() => {
+                        app.editor = loadEditor('#txt', 300);
+                        app.loading = false;
+                    }, 1500);
+                }
+                else {
+                    app.loading = true;
+                }
+            },
+            checkEditor() {
+                this.sxs[this.no] = 0;
+            },
+            checkTK(s) {
+                if (s.input.length == s.number) {
+                    this.sxs[this.no] = 0;
+                }
+            },
+            changefz(s) {
+                this.fontsize['font-size'] = s + 'px';
+            }
+        },
+        computed: {
+            complete: function () {
+                let all = exam.length;
+                var i = this.completeSubject;
+                return i + "/" + all;
+            }
+        }
+
+    });
+
+    app.subject = exam[0];
+    exam.forEach((e, i) => {
+        app.sxs[i] = 1;
+    });
+    setInterval(() => {
+        app.showCountDownTime = friendlyCountDown("2021-4-14 16:00");
+    }, 1000)
+    window.addEventListener('paste', function (e) {
+        if (!(e.clipboardData && e.clipboardData.items)) {
+            return;
+        }
+        else {
+            for (var i = 0, len = e.clipboardData.items.length; i < len; i++) {
+                var item = e.clipboardData.items[i];
+
+                if (item.kind === "string") {
+                    item.getAsString(function (str) {
+                        console.log("粘贴事件");
+                    })
+                } else if (item.kind === "file") {
+
+                }
+            }
+        }
+    });
+
+
+    window.onblur = function () {
+        console.log("界面离开事件");
+    }
+
+    window.onresize = function () {
+        console.log("窗口大小改变事件")
+    }
+
+
+    app.userdevice.ip = returnCitySN['cip'];
+    app.userdevice.city = returnCitySN['cname'];
+
+
+</script>
+
+</html>

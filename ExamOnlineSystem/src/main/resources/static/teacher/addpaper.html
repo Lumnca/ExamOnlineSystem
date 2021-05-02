@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>添加试卷</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="../js/vue/axios.min.js"></script>
+    <script src="../js/date.js"></script>
+    <script src="../js/request.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/wangeditor@latest/dist/wangEditor.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row :gutter="20">
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="reUrl('../index.html')"><span style="font-size:32px;"><i
+                                        class="el-icon-platform-eleme"></i>线上考试平台</span></el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="13">
+                        试题名称: {{name}}
+                    </el-col>
+                    <el-col :span="5">
+                        <el-input v-model="search" placeholder="输入关键字搜索" />
+                    </el-col>
+                    <el-col :span="1" style="margin-left:-25px;">
+                        <el-button icon="el-icon-search" circle></el-button>
+                    </el-col>
+                    <el-col :span="1" style="float:right;">
+                        <el-col :span="1" style="float:right;">
+                            <div class="grid-content bg-purple">
+                                <el-dropdown>
+                                    <el-avatar :size="60" src="https://empty">
+                                        <img
+                                            src="https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png" />
+                                    </el-avatar>
+                                    <el-dropdown-menu slot="dropdown">
+                                        <el-dropdown-item>{{username}}</el-dropdown-item>
+                                        <el-dropdown-item>
+                                            <el-button type="text" @click="reUrl('../index.html')"><span><i
+                                                        class="el-icon-suitcase"></i>用户中心</span></el-button>
+                                        </el-dropdown-item>
+                                        <el-dropdown-item>
+                                            <el-button type="text" @click="reUrl('/logout')"><span><i
+                                                        class="el-icon-back"></i>登出</span></el-button>
+                                        </el-dropdown-item>
+                                    </el-dropdown-menu>
+                                </el-dropdown>
+                            </div>
+                        </el-col>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-main id="main">
+                <div class="exam-area">
+                    <div class="exam-body">
+                        <div v-for="(c,i) in exam.chapters" >
+                           <div :style="c.style">
+                                <h2>第{{nos[i]}}部分, {{c.name}} (共{{c.subject.length }} 个小题 ,总分:{{c.total}})<el-button type="text" icon="el-icon-edit" circle @click="edititle(c)"></el-button>
+                                </h2>
+                           </div>
+                            <el-divider></el-divider>
+                            <div v-for="(s,i) in c.subject" >
+                                <div  style="text-align:left;">
+                                    <div >{{i+1}}.{{s.title}} <el-button type="text" icon="el-icon-edit" circle @click="editSubject(s)"></el-button>
+                                        
+                                        <div v-if="s.isHaveImg">
+                                            <img width="400" height="400" src="../img/login_bg.png">
+                                        </div>
+
+                                    </div>
+                                    <div v-if="s.type==1">
+                                        <div v-if="s.style==1">
+                                            <el-row :gutter="20">
+                                                <el-col :span="6">
+                                                    <el-radio v-model="s.select" label="1">A.{{s.options[0]}}</el-radio>
+                                                </el-col>
+                                                <el-col :span="6">
+                                                    <el-radio v-model="s.select" label="2">B.{{s.options[1]}}</el-radio>
+                                                </el-col>
+                                                <el-col :span="6">
+                                                    <el-radio v-model="s.select" label="3">C.{{s.options[2]}}</el-radio>
+                                                </el-col>
+                                                <el-col :span="6">
+                                                    <el-radio v-model="s.select" label="4">D.{{s.options[3]}}</el-radio>
+                                                </el-col>
+                                            </el-row>
+                                        </div>
+                                        <div v-if="s.style==2">
+                                            <div>
+                                                <el-radio v-model="s.select" label="1">A.{{s.options[0]}}</el-radio>
+                                            </div>
+                                            <div>
+                                                <el-radio v-model="s.select" label="2">B.{{s.options[1]}}</el-radio>
+                                            </div>
+                                            <div>
+                                                <el-radio v-model="s.select" label="3">C.{{s.options[2]}}</el-radio>
+                                            </div>
+                                            <div>
+                                                <el-radio v-model="s.select" label="4">D.{{s.options[3]}}</el-radio>
+                                            </div>
+                                        </div>
+                                        <div v-if="s.style==3">
+                                            <div>
+                                                <el-row>
+                                                    <el-col :span="12">
+                                                        <el-radio v-model="s.select" label="1">{{s.options[0]}}
+                                                        </el-radio>
+                                                    </el-col>
+                                                    <el-col :span="12">
+                                                        <el-radio v-model="s.select" label="2">{{s.options[1]}}
+                                                        </el-radio>
+                                                    </el-col>
+                                                </el-row>
+                                            </div>
+                                            <div>
+                                                <el-row>
+                                                    <el-col :span="12">
+                                                        <el-radio v-model="s.select" label="3">{{s.options[2]}}
+                                                        </el-radio>
+                                                    </el-col>
+                                                    <el-col :span="12">
+                                                        <el-radio v-model="s.select" label="4">{{s.options[3]}}
+                                                        </el-radio>
+                                                    </el-col>
+                                                </el-row>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div v-if="s.type==2">
+                                        <el-radio v-model="s.select" label="1"><i class="el-icon-check"></i></el-radio>
+                                        <el-radio v-model="s.select" label="2"><i class="el-icon-close"></i></el-radio>
+                                    </div>
+                                    <div v-if="s.type==3">
+                                        <el-button type="text" @click="showEditor(i)">显示文本域</el-button>
+                                        <div :id="'edit-'+i" class="text-edit">
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <el-dialog title="标题编辑" :visible.sync="dialogFormVisible1">
+
+                        <el-form ref="title" :model="title" size="mini" :inline="true" class="demo-form-inline">
+                            <el-form-item label="章节名称">
+                                <el-input v-model="title.name"></el-input>
+                            </el-form-item>
+                            <el-form-item label="对齐方式">
+                                <el-select v-model="title.style['text-align']" placeholder="文本居中">
+                                    <el-option label="文本居左" value="left"></el-option>
+                                    <el-option label="文本居右" value="right"></el-option>
+                                    <el-option label="文本居中" value="center"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="字体大小">
+                                <el-input v-model="title.style['font-size']"></el-input>
+                            </el-form-item>
+                            <div class="demonstration">
+                                <span>颜色</span>
+                                <el-color-picker v-model="title.style['color']"></el-color-picker>
+                            </div>
+
+                        </el-form>
+
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="dialogFormVisible1 = false">取 消</el-button>
+                            <el-button type="primary" @click="dialogFormVisible1 = false">确 定</el-button>
+                        </div>
+                    </el-dialog>
+                    <el-dialog title="题目编辑" :visible.sync="dialogFormVisible2">
+                        <el-form :model="subject" size="mini">
+                            <el-form-item label="题目">
+                                <el-input v-model="subject.title"></el-input>
+                            </el-form-item>
+                            <el-form-item v-for="(o,i) in subject.options" :label="'选项'+(i+1)">
+                                <el-input v-model="subject.options[i]"></el-input>
+                            </el-form-item>
+                            <el-form-item label="位置">
+                                <el-select v-model="subject.index" placeholder="请选择部分">
+                                    <el-option v-for="(ch,i) in exam.chapters" :label="ch.name" :value="i">
+                                    </el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="对齐">
+                                <el-select v-model="subject.style" placeholder="请选择">
+                                    <el-option label="4选项并排" value="1"></el-option>
+                                    <el-option label="4选项列排" value="2"></el-option>
+                                    <el-option label="2-2选项排" value="3"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="分值" prop="score" :rules="[
+                                      { required: true, message: '分数不能为空'},
+                                      { type: 'number', message: '分数必须为数字值'}
+                                    ]">
+                                <el-input type="score" v-model.number="subject.score" autocomplete="off">
+                                </el-input>
+                            </el-form-item>
+                            <el-form-item label="图片">
+                                <el-switch v-model="subject.isHaveImg"></el-switch>
+                            </el-form-item>
+                            <el-upload v-if="subject.isHaveImg" action="https://jsonplaceholder.typicode.com/posts/"
+                                list-type="picture-card" :on-preview="handlePictureCardPreview"
+                                :on-remove="handleRemove">
+                                <i class="el-icon-plus"></i>
+                            </el-upload>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="dialogFormVisible2 = false">取 消</el-button>
+                            <el-button type="primary" @click="dialogFormVisible2 = false">确 定</el-button>
+                        </div>
+                    </el-dialog>
+                    <el-dialog title="题目编辑" :visible.sync="dialogFormVisible3">
+                        <el-form ref="subject" :model="subject" size="mini">
+                            <el-form-item label="位置">
+                                <el-select v-model="subject.index" placeholder="请选择部分">
+                                    <el-option v-for="(ch,i) in exam.chapters" :label="ch.name" :value="i">
+                                    </el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="题目">
+                                <el-input v-model="subject.title"></el-input>
+                            </el-form-item>
+
+                            <el-form-item label="分值" prop="score" :rules="[
+                            { required: true, message: '分数不能为空'},
+                            { type: 'number', message: '分数必须为数字值'}
+                          ]">
+                                <el-input type="score" v-model.number="subject.score" autocomplete="off">
+                                </el-input>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="dialogFormVisible3 = false">取 消</el-button>
+                            <el-button type="primary" @click="dialogFormVisible3 = false">确 定</el-button>
+                        </div>
+                    </el-dialog>
+                    <el-dialog title="题目编辑" :visible.sync="dialogFormVisible4">
+                        <el-form ref="subject" :model="subject" size="mini">
+                            <el-form-item label="位置">
+                                <el-select v-model="subject.index" placeholder="请选择部分">
+                                    <el-option v-for="(ch,i) in exam.chapters" :label="ch.name" :value="i">
+                                    </el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="题目">
+                                <el-input v-model="subject.title"></el-input>
+                            </el-form-item>
+
+                            <el-form-item label="分值" prop="score" :rules="[
+                                { required: true, message: '分数不能为空'},
+                                { type: 'number', message: '分数必须为数字值'}
+                              ]">
+                                <el-input type="score" v-model.number="subject.score" autocomplete="off">
+                                </el-input>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="dialogFormVisible4 = false">取 消</el-button>
+                            <el-button type="primary" @click="dialogFormVisible4 = false">确 定</el-button>
+                        </div>
+                    </el-dialog>
+                </div>
+
+                <div>
+
+                    <el-drawer title="题目部件" :visible.sync="drawer" :modal="false" :direction="direction" size="40%">
+                        <template>
+                            <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
+                                <el-tab-pane label="章节" name="first">
+                                    <div class="tc">
+                                        <el-form ref="form" :model="titleForm" size="mini">
+                                            <el-form-item label="章节名称">
+                                                <el-input v-model="titleForm.name"></el-input>
+                                            </el-form-item>
+                                            <el-form-item label="对齐方式">
+                                                <el-select v-model="titleForm.style['text-align']" placeholder="文本居中">
+                                                    <el-option label="文本居中" value="center"></el-option>
+                                                    <el-option label="文本居左" value="left"></el-option>
+                                                    <el-option label="文本居右" value="right"></el-option>
+                                                </el-select>
+                                            </el-form-item>
+                                            <el-form-item size="large">
+                                                <el-button type="primary" size="mini" @click="addtitle(titleForm)">添加
+                                                </el-button>
+                                            </el-form-item>
+                                        </el-form>
+                                    </div>
+                                </el-tab-pane>
+                                <el-tab-pane label="选择题" name="second">
+                                    <div class="tc">
+                                        <el-form :model="selectForm" size="mini">
+                                            <el-form-item label="题目">
+                                                <el-input v-model="selectForm.title"></el-input>
+                                            </el-form-item>
+                                            <el-form-item v-for="(o,i) in selectForm.options" :label="'选项'+(i+1)">
+                                                <el-input v-model="selectForm.options[i]"></el-input>
+                                            </el-form-item>
+                                            <el-form-item label="位置">
+                                                <el-select v-model="selectForm.index" placeholder="请选择部分">
+                                                    <el-option v-for="(ch,i) in exam.chapters" :label="ch.name"
+                                                        :value="i">
+                                                    </el-option>
+                                                </el-select>
+                                            </el-form-item>
+                                            <el-form-item label="对齐">
+                                                <el-select v-model="selectForm.style" placeholder="请选择">
+                                                    <el-option label="4选项并排" value="1"></el-option>
+                                                    <el-option label="4选项列排" value="2"></el-option>
+                                                    <el-option label="2-2选项排" value="3"></el-option>
+                                                </el-select>
+                                            </el-form-item>
+                                            <el-form-item label="分值" prop="score" :rules="[
+                                                          { required: true, message: '分数不能为空'},
+                                                          { type: 'number', message: '分数必须为数字值'}
+                                                        ]">
+                                                <el-input type="score" v-model.number="selectForm.score"
+                                                    autocomplete="off">
+                                                </el-input>
+                                            </el-form-item>
+                                            <el-form-item label="图片">
+                                                <el-switch v-model="selectForm.isHaveImg"></el-switch>
+                                            </el-form-item>
+                                            <el-upload v-if="selectForm.isHaveImg"
+                                                :action="uploadfile"
+                                                list-type="picture-card" :on-preview="handlePictureCardPreview" 
+                                                :on-success="uplaodSuccess"
+                                                name="upload"
+                                                :on-remove="handleRemove">
+                                                <i class="el-icon-plus"></i>
+                                            </el-upload>
+                                            <el-form-item size="large">
+                                                <el-button type="primary" size="mini" @click="addSubject(selectForm)">添加
+                                                </el-button>
+                                            </el-form-item>
+                                        </el-form>
+                                    </div>
+
+                                </el-tab-pane>
+                                <el-tab-pane label="判断题" name="third">
+
+                                    <div>
+                                        <el-form ref="judgeForm" :model="judgeForm" size="mini">
+                                            <el-form-item label="位置">
+                                                <el-select v-model="judgeForm.index" placeholder="请选择部分">
+                                                    <el-option v-for="(ch,i) in exam.chapters" :label="ch.name"
+                                                        :value="i">
+                                                    </el-option>
+                                                </el-select>
+                                            </el-form-item>
+                                            <el-form-item label="题目">
+                                                <el-input v-model="judgeForm.title"></el-input>
+                                            </el-form-item>
+
+                                            <el-form-item label="分值" prop="score" :rules="[
+                                                        { required: true, message: '分数不能为空'},
+                                                        { type: 'number', message: '分数必须为数字值'}
+                                                      ]">
+                                                <el-input type="score" v-model.number="judgeForm.score"
+                                                    autocomplete="off">
+                                                </el-input>
+                                            </el-form-item>
+
+                                            <el-form-item size="large">
+                                                <el-button type="primary" size="mini" @click="addJudge(judgeForm)">添加
+                                                </el-button>
+                                            </el-form-item>
+                                        </el-form>
+                                    </div>
+
+                                </el-tab-pane>
+                                <el-tab-pane label="文本题" name="fourth">
+                                    <div class="tc">
+                                        <el-form ref="textForm" :model="textForm" size="mini">
+                                            <el-form-item label="位置">
+                                                <el-select v-model="textForm.index" placeholder="请选择部分">
+                                                    <el-option v-for="(ch,i) in exam.chapters" :label="ch.name"
+                                                        :value="i">
+                                                    </el-option>
+                                                </el-select>
+                                            </el-form-item>
+                                            <el-form-item label="题目">
+                                                <el-input v-model="textForm.title"></el-input>
+                                            </el-form-item>
+
+                                            <el-form-item label="分值" prop="score" :rules="[
+                                                            { required: true, message: '分数不能为空'},
+                                                            { type: 'number', message: '分数必须为数字值'}
+                                                          ]">
+                                                <el-input type="score" v-model.number="textForm.score"
+                                                    autocomplete="off">
+                                                </el-input>
+                                            </el-form-item>
+
+                                            <el-form-item size="large">
+                                                <el-button type="primary" size="mini" @click="addTextSubject(textForm)">
+                                                    添加
+                                                </el-button>
+                                            </el-form-item>
+                                        </el-form>
+                                    </div>
+
+                                </el-tab-pane>
+                            </el-tabs>
+                        </template>
+
+                        <div>
+                            <br><br>
+                            <el-button type="primary" size="mini" @click="exitEdit">退出编辑
+                            </el-button>
+                        </div>
+                    </el-drawer>
+                </div>
+            </el-main>
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 XXX. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+        <div class="open">
+            <el-button type="success" round @click="drawer = true"> <i class="el-icon-d-arrow-left"> OPEN</i>
+            </el-button>
+        </div>
+    </div>
+</body>
+<script>
+    let cid = location.search.split('=').pop();
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                search: '',
+                isLoginCheck: '未登录',
+                islogin: false,
+                loginForm: {
+                    id: '',
+                    result: 0,
+                    pass: ''
+                },
+                centerDialogVisible: false,
+                date: new Date(),
+                currentDate: new Date(),
+                menuData: [
+                    { no: 1, name: '试卷管理', numbers: 2, href: 'testpaper.html' },
+                    { no: 2, name: '考试管理', numbers: 0 },
+                    { no: 3, name: '数据统计', numbers: 12 },
+                    { no: 4, name: '其他', numbers: 1 }
+                ],
+                drawer: false,
+                dialogFormVisible1: false,
+                dialogFormVisible2: false,
+                dialogFormVisible3: false,
+                dialogFormVisible4: false,
+                direction: 'rtl',
+                drawer: true,
+                activeName: 'first',
+                titleForm: {
+                    name: '',
+                    style: { 'text-align': 'center', 'font-size': '18px', 'color': '#000' }
+                },
+                exam: {
+                    name: 'xxx',
+                    type: '',
+                    chapters: []
+                },
+                nos: ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"],
+                title: { name: '', style: { 'text-align': 'center', 'font-size': '18px', 'color': '#000' } },
+                selectForm: {
+                    title: '',
+                    style: '',
+                    score: 0,
+                    isHaveImg: false,
+                    options: ["", "", "", ""],
+                    type: 1,
+                    select: ''
+                },
+                subject: {
+                    title: '',
+                    style: '',
+                    score: 0,
+                    isHaveImg: false,
+                    options: ["", "", "", ""],
+                    select: ''
+                },
+                judgeForm: {
+                    title: '',
+                    scrore: '',
+                    type: 2,
+                    select: ''
+                },
+                textForm: {
+                    title: '',
+                    score: '',
+                    type: 3,
+                    select: ''
+                },
+                editors: [],
+                name: 'C语言',
+                username: '',
+                fs : FS,
+                uploadfile : UPLOADFILE
+            }
+        },
+        methods: {
+            getFontSize(s) {
+
+            },
+            addtitle(form) {
+                if (form.name) {
+                    this.exam.chapters.push({ name: form.name, style: form.style, subject: [], total: 0 });
+                }
+                else {
+                    this.$message.error('不能为空!')
+                }
+            },
+            reUrl(url) {
+                window.location.href = url;
+            },
+            handleClose(done) {
+                this.$confirm('确认关闭？')
+                    .then(_ => {
+                        done();
+                    }).catch(_ => { });
+            },
+            edititle(form) {
+                this.dialogFormVisible1 = true;
+                this.title = form;
+            },
+            savetitle(form) {
+                this.dialogFormVisible1 = false;
+            },
+            handleClick(tab, event) {
+                console.log(tab, event);
+            },
+            handleRemove(file, fileList) {
+                console.log(file, fileList);
+            },
+            uplaodSuccess(response, file, fileList){
+                console.log(response);
+            },
+            handlePictureCardPreview(file) {
+                this.dialogImageUrl = file.url;
+            },
+            addSubject(form) {
+                this.exam.chapters[form.index].subject.push({
+                    title: form.title,
+                    style: form.style,
+                    score: form.score,
+                    isHaveImg: form.isHaveImg,
+                    options: form.options,
+                    type: 1
+                });
+                this.exam.chapters[form.index].total += form.score;
+            },
+            editSubject(subject) {
+
+                if (subject.type == 1) {
+                    this.dialogFormVisible2 = true;
+                }
+                else if (subject.type == 2) {
+                    this.dialogFormVisible3 = true;
+                }
+                else if (subject.type == 3) {
+                    this.dialogFormVisible4 = true;
+                }
+                this.subject = subject;
+            },
+            addJudge(form) {
+                this.exam.chapters[form.index].subject.push({
+                    title: form.title,
+                    score: form.score,
+                    type: 2
+                });
+                this.exam.chapters[form.index].total += form.score;
+
+            },
+            addTextSubject(form) {
+                this.exam.chapters[form.index].subject.push({
+                    title: form.title,
+                    score: form.score,
+                    type: 3
+                });
+                this.exam.chapters[form.index].total += form.score;
+            },
+            showEditor(i) {
+                var id = "#edit-" + i;
+                const E = window.wangEditor;
+                const editor = new E(id);
+                editor.create()
+            },
+            exitEdit() {
+                this.$confirm('是否保存?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    window.location.href = 'testpaper.html';
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            }
+        }
+    })
+
+</script>
+
+</html>

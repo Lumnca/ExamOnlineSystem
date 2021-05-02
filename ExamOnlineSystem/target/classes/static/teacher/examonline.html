@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>线上考试</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="../js/vue/axios.min.js"></script>
+    <script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row :gutter="20">
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="reUrl('../index.html')"><span style="font-size:32px;"><i
+                                        class="el-icon-platform-eleme"></i>线上考试平台</span></el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="13">
+                        <div>
+                            {{date}}
+                        </div>
+                    </el-col>
+                    <el-col :span="5">
+                        <el-input v-model="search" placeholder="输入关键字搜索" />
+                    </el-col>
+                    <el-col :span="1" style="margin-left:-25px;">
+                        <el-button icon="el-icon-search" circle></el-button>
+                    </el-col>
+                    <el-col :span="1" style="float:right;">
+                        <div class="grid-content bg-purple" v-if="islogin">
+                            <el-dropdown>
+                                <el-avatar :size="60" src="https://empty">
+                                    <img src="https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png" />
+                                </el-avatar>
+                                <el-dropdown-menu slot="dropdown">
+                                    <el-dropdown-item>{{user.name}}</el-dropdown-item>
+                                    <el-dropdown-item>
+                                        <el-button type="text" @click="reUrl('../index.html')"><span><i
+                                                    class="el-icon-suitcase"></i>用户中心</span></el-button>
+                                    </el-dropdown-item>
+                                    <el-dropdown-item>
+                                        <el-button type="text" @click="out()"><span><i
+                                                    class="el-icon-back"></i>登出</span></el-button>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </div>
+                        <div v-else>
+                            <el-button type="text" @click="centerDialogVisible = true"><i
+                                    class="el-icon-user-solid"></i> {{isLoginCheck}} </el-button>
+
+
+                            <el-dialog title="登录" :visible.sync="centerDialogVisible" width="30%" center>
+
+                                <el-form :model="loginForm" status-icon :rules="rules" ref="loginForm"
+                                    label-width="100px" class="demo-loginForm">
+
+                                    <el-form-item label="账号" prop="id">
+                                        <el-input type="text" v-model="loginForm.id" autocomplete="off"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="密码" prop="pass">
+                                        <el-input type="password" v-model="loginForm.pass" autocomplete="off">
+                                        </el-input>
+                                    </el-form-item>
+
+                                    <div class="block" style="padding:48px;">
+                                        <span class="demonstration">人机验证,请将滑块拉到<b> {{loginForm.result}} </b></span>
+                                        <el-slider v-model="loginForm.number" :step="1" :max="10" :min=0 show-stops>
+                                        </el-slider>
+                                    </div>
+
+
+                                    <el-form-item>
+                                        <el-button type="primary" @click="submitForm('loginForm')">登录</el-button>
+                                        <el-button @click="resetForm('loginForm')">重置</el-button>
+
+                                        <span style="margin:16px 54px;font-size: 16px;"><a href="#">忘记密码?</a> | <a
+                                                href="#">注册账号</a></span>
+                                    </el-form-item>
+                                </el-form>
+
+                            </el-dialog>
+                        </div>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-main id="main">
+                <div v-for="(i) in Math.ceil(users.length/5)">
+                    <el-col :span="5" v-for="(j) in 5" :key="j" :offset="j > 0? 1 : 0" v-if="users[(i-1)*5+j-1]!=null"
+                        style="margin-top:20px;">
+                        <el-card :body-style="{ padding: '7px 12px'}">
+                            <div>
+                                <div style="text-align:left;">
+                                    <h2>
+                                        <span><i class="el-icon-postcard"></i></span> {{users[(i-1)*5+j-1].id}}
+                                        &nbsp; &nbsp;
+                                        <span><i class="el-icon-user"></i></span> {{users[(i-1)*5+j-1].name}}
+                                        <span style="float:right;color: rgb(125, 224, 43);font-size: 18px;">
+                                            分数 : <span v-if="falg" class="el-icon-refresh-right"></span>
+                                            <span v-else>{{users[(i-1)*5+j-1].score}}</span>
+                                        </span>
+                                    </h2>
+                                </div>
+                                <div class="user">
+                                    <div>
+                                        <span><i class="el-icon-loading"></i> {{users[(i-1)*5+j-1].info}}</span>
+                                    </div>
+                                    <div>
+                                        <span style="color:green" v-if="users[(i-1)*5+j-1].state == 1"><i class="el-icon-success"></i> 在线</span>
+                                        <span style="color:red" v-else><i class="el-icon-error"> 不在线</i></span>
+                                    </div>
+                                   
+                                    &nbsp;&nbsp;
+                                    <span><i class="el-icon-collection-tag"></i> {{users[(i-1)*5+j-1].grade}}</span>
+
+                                    <div class="bottom clearfix">
+                                        <el-button type="text" class="button" @click="roomInfo(users[(i-1)*5+j-1])">
+                                            查看
+                                        </el-button>
+                                        <el-button type="text" class="button" @click="sendMsg(users[(i-1)*5+j-1].id)">发送消息
+                                        </el-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </el-card>
+                    </el-col>
+                </div>
+                <el-dialog title="发送消息" :visible.sync="dialogFormVisible">
+                    <el-form :model="form">
+                        <el-form-item label="消息主体" :label-width="formLabelWidth">
+                            <el-input v-model="form.msg" autocomplete="off"></el-input>
+                        </el-form-item>
+                    </el-form>
+                    <div slot="footer" class="dialog-footer">
+                        <el-button @click="dialogFormVisible = false">取 消</el-button>
+                        <el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+                    </div>
+                </el-dialog>
+            </el-main>
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 XXX. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<script>
+    var checkId = (rule, value, callback) => {
+        if (!value) {
+            return callback(new Error('ID不能为空'));
+        }
+        setTimeout(() => {
+            if (value.indexOf("'") != -1 || value.indexOf("#") != -1 || value.indexOf(" ") != -1) {
+                callback(new Error('请不要输入特殊字符'));
+            } else {
+                callback();
+            }
+        }, 1000);
+    };
+    var checkPass = (rule, value, callback) => {
+        if (!value) {
+            return callback(new Error('密码不能为空'));
+        }
+        setTimeout(() => {
+            if (value.indexOf("'") != -1 || value.indexOf("#") != -1 || value.indexOf(" ") != -1) {
+                callback(new Error('请不要输入特殊字符'));
+            } else {
+                callback();
+            }
+        }, 1000);
+    };
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                search: '',
+                isLoginCheck: '未登录',
+                islogin: false,
+                loginForm: {
+                    id: '',
+                    result: 0,
+                    pass: ''
+                },
+                centerDialogVisible: false,
+                rules: {
+                    id: [
+                        { validator: checkId, trigger: 'blur' }
+                    ],
+                    pass: [
+                        { validator: checkPass, trigger: 'blur' }
+                    ]
+                },
+                date: new Date(),
+                currentDate: new Date(),
+                exams: [
+                    { date: '2021-1-12', name: '测试1', state: 1 },
+                    { date: '2021-2-12', name: '测试2', state: 2 },
+                    { date: '2021-3-13', name: '测试3', state: 3 },
+                ],
+                dialogFormVisible: false,
+                testform: {
+                    date: '',
+                    name: '',
+                },
+                users: [
+                    { id: 1, name: '张三', state: 1, info: '无状况', actions: [], score: '' },
+                    { id: 2, name: '李四', state: 2, info: '无状况', actions: [], score: '' },
+                ],
+                form : {
+                    msg : ''
+                }
+            }
+        },
+        methods: {
+
+            submitForm(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        alert('submit!');
+                    } else {
+                        console.log('error submit!!');
+                        return false;
+                    }
+                });
+            },
+            resetForm(formName) {
+                this.$refs[formName].resetFields();
+            },
+            reUrl(url) {
+                window.location.href = url;
+            },
+            sendMsg(id){
+                this.dialogFormVisible = true;
+            }
+
+
+
+        },
+    })
+
+</script>
+
+</html>

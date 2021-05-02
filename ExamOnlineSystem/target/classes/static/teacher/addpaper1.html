@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>查看试卷</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="../js/vue/axios.min.js"></script>
+    <script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/wangeditor@latest/dist/wangEditor.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row :gutter="20">
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="reUrl('../index.html')"><span style="font-size:32px;"><i
+                                        class="el-icon-platform-eleme"></i>线上考试平台</span></el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="13">
+                        <div>
+                            {{date}}
+                        </div>
+                    </el-col>
+                    <el-col :span="5">
+                        <el-input v-model="search" placeholder="输入关键字搜索" />
+                    </el-col>
+                    <el-col :span="1" style="margin-left:-25px;">
+                        <el-button icon="el-icon-search" circle></el-button>
+                    </el-col>
+                    <el-col :span="1" style="float:right;">
+                        <div class="grid-content bg-purple" v-if="islogin">
+                            <el-dropdown>
+                                <el-avatar :size="60" src="https://empty">
+                                    <img src="https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png" />
+                                </el-avatar>
+                                <el-dropdown-menu slot="dropdown">
+                                    <el-dropdown-item>{{user.name}}</el-dropdown-item>
+                                    <el-dropdown-item>
+                                        <el-button type="text" @click="reUrl('user.html')"><span><i
+                                                    class="el-icon-suitcase"></i>用户中心</span></el-button>
+                                    </el-dropdown-item>
+                                    <el-dropdown-item>
+                                        <el-button type="text" @click="out()"><span><i
+                                                    class="el-icon-back"></i>登出</span></el-button>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </div>
+                        <div v-else>
+                            <el-button type="text" @click="centerDialogVisible = true"><i
+                                    class="el-icon-user-solid"></i> {{isLoginCheck}} </el-button>
+
+
+                            <el-dialog title="登录" :visible.sync="centerDialogVisible" width="30%" center>
+                                <el-form :model="loginForm" status-icon :rules="rules" ref="loginForm"
+                                    label-width="100px" class="demo-loginForm">
+
+                                    <el-form-item label="账号" prop="id">
+                                        <el-input type="text" v-model="loginForm.id" autocomplete="off"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="密码" prop="pass">
+                                        <el-input type="password" v-model="loginForm.pass" autocomplete="off">
+                                        </el-input>
+                                    </el-form-item>
+
+                                    <div class="block" style="padding:48px;">
+                                        <span class="demonstration">人机验证,请将滑块拉到<b> {{loginForm.result}} </b></span>
+                                        <el-slider v-model="loginForm.number" :step="1" :max="10" :min=0 show-stops>
+                                        </el-slider>
+                                    </div>
+
+
+                                    <el-form-item>
+                                        <el-button type="primary" @click="submitForm('loginForm')">登录</el-button>
+                                        <el-button @click="resetForm('loginForm')">重置</el-button>
+
+                                        <span style="margin:16px 54px;font-size: 16px;"><a href="#">忘记密码?</a> | <a
+                                                href="#">注册账号</a></span>
+                                    </el-form-item>
+                                </el-form>
+
+                            </el-dialog>
+                        </div>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-main id="main">
+                <div class="exam-area">
+                    <div class="exam-body">
+                        <div>
+                            <h3>
+                                    请在下侧编辑
+                            </h3>
+                        </div>
+                        <div id="edit" class="edit-exam">
+
+                        </div>
+                        <div>
+                            <el-button type="primary" size="mini" @click="exitEdit">退出编辑</el-button>
+                        </div>
+                    </div>
+                </div>
+            </el-main>
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 XXX. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<script>
+
+    var checkId = (rule, value, callback) => {
+        if (!value) {
+            return callback(new Error('ID不能为空'));
+        }
+        setTimeout(() => {
+            if (value.indexOf("'") != -1 || value.indexOf("#") != -1 || value.indexOf(" ") != -1) {
+                callback(new Error('请不要输入特殊字符'));
+            } else {
+                callback();
+            }
+        }, 1000);
+    };
+    var checkPass = (rule, value, callback) => {
+        if (!value) {
+            return callback(new Error('密码不能为空'));
+        }
+        setTimeout(() => {
+            if (value.indexOf("'") != -1 || value.indexOf("#") != -1 || value.indexOf(" ") != -1) {
+                callback(new Error('请不要输入特殊字符'));
+            } else {
+                callback();
+            }
+        }, 1000);
+    };
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                search: '',
+                isLoginCheck: '未登录',
+                islogin: false,
+                loginForm: {
+                    id: '',
+                    result: 0,
+                    pass: ''
+                },
+                centerDialogVisible: false,
+                rules: {
+                    id: [
+                        { validator: checkId, trigger: 'blur' }
+                    ],
+                    pass: [
+                        { validator: checkPass, trigger: 'blur' }
+                    ]
+                },
+                date: new Date(),
+                currentDate: new Date(),
+                menuData: [
+                    { no: 1, name: '试卷管理', numbers: 2, href: 'testpaper.html' },
+                    { no: 2, name: '考试管理', numbers: 0 },
+                    { no: 3, name: '数据统计', numbers: 12 },
+                    { no: 4, name: '其他', numbers: 1 }
+                ],
+                drawer: false,
+                dialogFormVisible1: false,
+                dialogFormVisible2: false,
+                dialogFormVisible3: false,
+                dialogFormVisible4: false,
+                direction: 'rtl',
+                drawer: true,
+                typeNames: ['1'],
+                titleForm: {
+                    name: '',
+                    style: ''
+                },
+                exam: {
+                    name: 'xxx',
+                    type: '',
+                    chapters: [
+                        {
+                            name: '能力测试',
+                            subject: [
+                                { title: '第一题xaa', type: 1, style: 1, options: ["12", "14", "16", "18"], select: '', score: 4 },
+                                { title: '第二题xxx', type: 2, style: 1, score: 4 },
+                                { title: 'xa', type: 3, style: 1, score: 4 }
+                            ],
+                            total: 12,
+                            style: 'text-align: left'
+                        }
+                    ],
+
+                },
+                nos: ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"],
+                editors: [],
+            }
+        },
+        methods: {
+            addtitle(form) {
+                console.log(form);
+                this.exam.chapters.push({ name: form.name, style: form.style, subject: [], total: 0 });
+            },
+            submitForm(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        alert('submit!');
+                    } else {
+                        console.log('error submit!!');
+                        return false;
+                    }
+                });
+            },
+            resetForm(formName) {
+                this.$refs[formName].resetFields();
+            },
+            reUrl(url) {
+                window.location.href = url;
+            },
+            handleClose(done) {
+                this.$confirm('确认关闭？')
+                    .then(_ => {
+                        done();
+                    })
+                    .catch(_ => { });
+            },
+        },
+
+    });
+
+
+    var id = "#edit";
+    const E = window.wangEditor;
+    const editor = new E(id);
+    editor.config.height = 600;
+    editor.config.uploadImgServer = 'https://jsonplaceholder.typicode.com/posts/'
+    editor.create();
+
+
+
+
+</script>
+
+</html>

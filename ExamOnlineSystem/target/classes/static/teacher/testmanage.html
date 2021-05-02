@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>用户中心</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="../js/request.js"></script>
+    <script src="../js/date.js"></script>
+    <script src="../js/vue/axios.min.js"></script>
+    <script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row>
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="reUrl('../index.html')">
+                                <span style="font-size:32px;"><i class="el-icon-platform-eleme"></i>线上考试平台</span>
+                            </el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="17">
+                        <div>
+                            &nbsp;
+                        </div>
+                    </el-col>
+                    <el-col :span="2">
+                        <div style="float: right;">
+                            {{username}}
+                        </div>
+                    </el-col>
+                    <el-col :span="1">
+                        <el-popover placement="bottom" width="100" trigger="click">
+                            <div>
+                                <div class="userbored">
+                                    <el-link href="account.html" icon="el-icon-user" :underline="false">个人中心</el-link>
+                                </div>
+                                <div class="userbored">
+                                    <el-link href="../index.html" icon="el-icon-back" :underline="false">退出</el-link>
+                                </div>
+                            </div>
+                            <el-button icon="el-icon-user-solid" slot="reference" circle></el-button>
+                        </el-popover>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-main id="main">
+                <div style="text-align:left;">
+                    <div class="thd">
+                        <el-button size="small" @click="reUrl('user.html')"><i class="el-icon-back"></i> 返回列表</el-button>
+                        <el-button size="small" @click="dialogFormVisible2  = true"><i
+                                class="el-icon-circle-plus-outline"></i> 添加考试</el-button>
+                    </div>
+                    <el-table
+                        :data="exams.filter(data => !search || data.name.toLowerCase().includes(search.toLowerCase()))"
+                        style="width: 100%">
+                        <el-table-column label="名称" prop="name">
+                        </el-table-column>
+                        <el-table-column label="开始时间" prop="startdate">
+                        </el-table-column>
+                        <el-table-column label="结束时间" prop="enddate">
+                        </el-table-column>
+                        <el-table-column label="用户组">
+                            <template slot-scope="scope">
+                                {{classname(scope.row.cid)}}
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="类型">
+                            <template slot-scope="scope">
+                                <el-tag v-if="scope.row.type === 1" type="success">分类模式</el-tag>
+                                <el-tag v-else>随机模式</el-tag>
+                            </template>
+                        </el-table-column>
+
+
+                        <el-table-column align="right">
+                            <template slot="header" slot-scope="scope">
+                                <el-input v-model="search" size="mini" placeholder="输入关键字搜索" />
+                            </template>
+                            <template slot-scope="scope">
+
+                                <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
+                                <el-button size="mini" @click="showInfor(scope.$index, scope.row)">
+                                    查看信息
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <el-dialog title="编辑考试" :visible.sync="dialogFormVisible">
+                        <el-form :model="exam">
+                            <el-form-item label="考试名称" label-width="80px" style="text-align:left;">
+                                <el-input v-model="exam.name" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="考试类型">
+                                <el-select v-model="exam.type" placeholder="请选择">
+                                    <el-option label="分类模式" :value="1"></el-option>
+                                    <el-option label="随机模式" :value="2"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="用户组">
+                                <el-select v-model="exam.cid" placeholder="请选择">
+                                    <el-option v-for="c in classes" :label="c.name" :value="c.id"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="时间范围">
+                                <el-date-picker v-model="value" type="datetimerange" @change="updateTime"
+                                    start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00']">
+                                </el-date-picker>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="dialogFormVisible = false">取 消</el-button>
+                            <el-button type="primary" @click="updateexam(exam)">确 定</el-button>
+                        </div>
+                    </el-dialog>
+
+                    <el-dialog title="添加考试" :visible.sync="dialogFormVisible2">
+                        <el-form :model="exam">
+                            <el-form-item label="考试名称" label-width="80px" style="text-align:left;">
+                                <el-input v-model="exam.name" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="考试类型">
+                                <el-select v-model="exam.type" placeholder="请选择">
+                                    <el-option label="分类模式" :value="1"></el-option>
+                                    <el-option label="随机模式" :value="2"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="用户组">
+                                <el-select v-model="exam.cid" placeholder="请选择">
+                                    <el-option v-for="c in classes" :label="c.name" :value="c.id"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="时间范围">
+                                <el-date-picker v-model="value" type="datetimerange" @change="updateTime"
+                                    start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00']">
+                                </el-date-picker>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="dialogFormVisible2 = false">取 消</el-button>
+                            <el-button type="primary" @click="insertExam(exam)">确 定</el-button>
+                        </div>
+                    </el-dialog>
+                </div>
+            </el-main>
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 XXX. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<script>
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                search: '',
+                username: getUserInfo().username,
+                date: new Date(),
+                currentDate: new Date(),
+                exams: [],
+                dialogFormVisible: false,
+                dialogFormVisible2: false,
+                testform: {
+                    date: '',
+                    name: '',
+                },
+                exam: {
+                    uid: getUserInfo().id,
+                    cid: 0,
+                    type: 1,
+                    name: '考试'
+                },
+                value: [new Date(), new Date()],
+                classes: []
+            }
+        },
+        methods: {
+            reUrl(url) {
+                window.location.href = url;
+            },
+            handleEdit(i, data) {
+                this.dialogFormVisible = true;
+                this.testform = data;
+            },
+            showInfor(i, data) {
+                this.reUrl('exam.html?id='+data.id);
+            },
+            updateTime() {
+                this.exam.startdate = getNowDate(0, app.value[0]);
+                this.exam.enddate = getNowDate(0, app.value[1]);
+            },
+            insertExam(e) {
+                request('POST', "/examadd", e, function (res) {
+                    app.$message(res.data.message);
+                }, null);
+                this.dialogFormVisible2 = false;
+            },
+            classname(id) {
+                let n = ''
+                this.classes.forEach(element => {
+                    if (element.id == id) {
+                        n = element.name;
+                    }
+                });
+                return n;
+            },
+            handleEdit(row) {
+                this.exam = row;
+                this.dialogFormVisible = true;
+            },
+            updateexam(e) {
+                request('POST', "/updatexam", e, function (res) {
+                    app.$message(res.data.message);
+                }, null);
+                this.dialogFormVisible = false;
+            }
+        },
+    })
+    request('GET', "/classes/" + getUserInfo().id, null, function (res) {
+        app.classes = res.data;
+    }, null);
+
+    request('GET', "/exams/" + getUserInfo().id, null, function (res) {
+        app.exams = res.data;
+    }, null);
+</script>
+
+</html>

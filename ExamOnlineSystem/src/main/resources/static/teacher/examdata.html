@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>数据统计</title>
+    <script src="../js/vue/vue.js"></script>
+    <script src="../js/vue/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.0.2/dist/echarts.min.js"></script>
+    <script src="../js/vue/axios.min.js"></script>
+    <script src="../js/date.js"></script>
+    <script src="../js/request.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row>
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="reUrl('../index.html')">
+                                <span style="font-size:32px;"><i class="el-icon-platform-eleme"></i>线上考试平台</span>
+                            </el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="17">
+                        <div>
+                            &nbsp;
+                        </div>
+                    </el-col>
+                    <el-col :span="2">
+                        <div style="text-align: right;">
+                            {{username}}
+                        </div>
+                    </el-col>
+                    <el-col :span="1">
+                        <el-popover placement="bottom" width="100" trigger="click">
+                            <div>
+                                <div class="userbored">
+                                    <el-link href="account.html" icon="el-icon-user" :underline="false">个人中心</el-link>
+                                </div>
+                                <div class="userbored">
+                                    <el-link href="../index.html" icon="el-icon-back" :underline="false">退出</el-link>
+                                </div>
+                            </div>
+                            <el-button icon="el-icon-user-solid" slot="reference" circle></el-button>
+                        </el-popover>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-main id="main">
+                <el-tabs v-model="activeName" @tab-click="handleClick">
+                    <el-tab-pane label="总分" name="first">
+                        <div>
+                            <h2>{{exam.name}}</h2>
+                            <el-table :data="exampeopleinfor" border :summary-method="getSummaries" show-summary
+                                style="width: 100%; margin-top: 20px">
+                                <el-table-column prop="name" label="姓名">
+                                </el-table-column>
+                                <el-table-column prop="date" label="提交时间" sortable>
+                                </el-table-column>
+                                <el-table-column prop="score" sortable label="总分">
+                                </el-table-column>
+                                <el-table-column align="right">
+                                    <template slot-scope="scope">
+                                        <el-button size="mini" @click="showInfor(scope.$index, scope.row)">
+                                            查看信息
+                                        </el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </div>
+                        <el-dialog title="试题详情" :visible.sync="dialogTableVisible">
+                            <el-table :data="gridData">
+                                <el-table-column property="no" label="标号" width="50"></el-table-column>
+                                <el-table-column property="title" label="标题" width="180"></el-table-column>
+                                <el-table-column property="input" label="答题内容"></el-table-column>
+                                <el-table-column property="answer" label="答案"></el-table-column>
+                                <el-table-column property="score" label="分数"></el-table-column>
+                            </el-table>
+                        </el-dialog>
+                    </el-tab-pane>
+                    <el-tab-pane label="成绩组成" name="second">
+                        <div>
+                            <el-row :gutter="20">
+                                <el-col :span="12">
+                                    <div id="cy" style="width: 800px;height:600px;"></div>
+                                </el-col>
+                                <el-col :span="12">
+                                    <div id="fb" style="width: 800px;height:600px;"></div>
+                                </el-col>
+                            </el-row>
+                        </div>
+                    </el-tab-pane>
+                    <el-tab-pane label="题目得分" name="third">
+                        <div>
+                            <el-row :gutter="20">
+                                <el-col :span="24">
+                                    <div id="st" style="width: 1600px;height:700px;"></div>
+                                </el-col>
+                            </el-row>
+                        </div>
+                    </el-tab-pane>
+                    <el-tab-pane label="题目详情" name="fourth">
+                        <el-table :data="datas">
+                            <el-table-column property="no" label="标号" width="50"></el-table-column>
+                            <el-table-column property="title" label="标题" ></el-table-column>
+                            <el-table-column property="tNum" label="答对人数"  width="160"></el-table-column>
+                            <el-table-column property="fNum" label="答错人数"  width="160"></el-table-column>
+                            <el-table-column property="avg" label="平均分" width="160"></el-table-column>
+                            <el-table-column property="avgs" label="正确率" width="160"></el-table-column>
+                        </el-table>
+                    </el-tab-pane>
+                </el-tabs>
+
+            </el-main>
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 XXX. All Rights Reserved.
+                    <br>
+                    XXXX有限公司 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<script>
+    var id = getOneUrlStr('id');
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                username: getUserInfo().username,
+                date: new Date(),
+                currentDate: new Date(),
+                dialogTableVisible: false,
+                datas : [],
+                exam: {
+                    name: '第一次测试',
+                    date: '2020-12-24 12:00',
+                    peopletotal: 10,
+                    peopleuse: 9,
+                    type: '',
+                    subject: [
+                        { id: 1, score: 4, trueNum: 3, falseNum: 1 },
+                        { id: 1, score: 4, trueNum: 2, falseNum: 2 },
+                        { id: 1, score: 4, trueNum: 4, falseNum: 0 },
+                        { id: 1, score: 4, trueNum: 2, falseNum: 2 },
+                        { id: 1, score: 4, trueNum: 0, falseNum: 4 },
+                        { id: 1, score: 4, trueNum: 1, falseNum: 3 },
+                        { id: 1, score: 4, trueNum: 3, falseNum: 1 },
+                        { id: 1, score: 4, trueNum: 3, falseNum: 1 },
+                        { id: 1, score: 4, trueNum: 2, falseNum: 2 },
+                        { id: 1, score: 4, trueNum: 3, falseNum: 1 },
+                    ]
+
+                },
+                exampeopleinfor: [],
+                dialogFormVisible: false,
+                dialogFormVisible2: false,
+                activeName: 'first',
+                gridData: []
+            }
+        },
+        methods: {
+            reUrl(url) {
+                window.location.href = url;
+            },
+            getSummaries(param) {
+                const { columns, data } = param;
+                const sums = [];
+                let num = 0;
+                columns.forEach((column, index) => {
+                    if (index === 0) {
+                        sums[index] = '平均分';
+                        return;
+                    }
+                    const values = data.map(item => Number(item[column.property]));
+                    if (!values.every(value => isNaN(value))) {
+                        sums[index] = values.reduce((prev, curr) => {
+                            const value = Number(curr);
+                            num++;
+                            if (!isNaN(value)) {
+                                return prev + curr;
+                            } else {
+                                return prev;
+                            }
+                        }, 0);
+                        sums[index] = (sums[index] / (num)).toFixed(2);
+                        sums[index] += ' 分';
+                    } else {
+                        sums[index] = ' ';
+                    }
+                });
+
+                return sums;
+            },
+            handleClick(tab, event) {
+                console.log(tab, event);
+            },
+            showInfor(i, s) {
+                this.dialogTableVisible = true;
+                this.gridData = s.results;
+            }
+        },
+    })
+</script>
+<script src="../js/echarload.js"></script>
+
+</html>

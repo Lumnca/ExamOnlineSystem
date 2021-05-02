@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>课程总览</title>
+    <script src="js/vue/vue.js"></script>
+    <script src="js/vue/index.js"></script>
+    <script src="js/vue/axios.min.js"></script>
+    <script src="js/request.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+    <style>
+        @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <el-row :gutter="20">
+                    <el-col :span="4">
+                        <div style="float:left;">
+                            <el-button type="text" @click="rehref('index.html')"><span style="font-size:32px;"><i
+                                        class="el-icon-platform-eleme"></i>线上考试平台</span></el-button>
+                        </div>
+                    </el-col>
+                    <el-col :span="13">
+                        <div>
+                            {{date}}
+                        </div>
+                    </el-col>
+                    <el-col :span="5">
+
+                    </el-col>
+                    <el-col :span="1" style="margin-left:-25px;">
+                    </el-col>
+                    <el-col :span="1" style="float:right;">
+                        <div>
+
+                        </div>
+                    </el-col>
+                </el-row>
+
+            </el-header>
+            <el-main id="main">
+                <div id="index">
+                    <h2>线上考试平台</h2>
+                    <div class="login">
+                        <form action="http://47.106.254.86:100/login" method="POST" class="form-signin" role="form">
+                            <el-input v-model="username" name="username">
+                                <template slot="prepend">账 号</template>
+                            </el-input>
+                            <el-input v-if="isreg" v-model="no" name="no">
+                                <template slot="prepend">工 号</template>
+                            </el-input>
+                            <el-input v-model="password" name="password" type="password">
+                                <template slot="prepend">密 码</template>
+                            </el-input>
+
+                            <el-input v-model="vai">
+                                <template slot="append">验证码: {{code}}</template>
+                            </el-input>
+                            <br><br>
+                            <template v-if="isreg">
+                                <span><i class="el-icon-user-solid"></i> 身 份 </span>
+                                <el-select v-model="value" placeholder="请选择">
+                                    <el-option v-for="item in options" :key="item.value" :label="item.label"
+                                        :value="item.value">
+                                    </el-option>
+                                </el-select>
+                            </template>
+                            <el-button v-if="!isreg" type="primary" type="small" @click="login">登 录</el-button>
+                            <el-button v-else type="primary" type="small" @click="regPost">注 册</el-button>
+                            <span v-if="!isreg" style="margin-left:50px;">
+                                <el-button type="text" @click="reg">没有账号? |注册</el-button>
+                            </span>
+                        </form>
+                    </div>
+                </div>
+                <div>
+
+                </div>
+            </el-main>
+            <el-container>
+                <el-footer>
+                    Copyright © 2021 xxxx. All Rights Reserved.
+                    <br>
+                    XXXX 版权所有
+                </el-footer>
+            </el-container>
+        </el-container>
+        </el-container>
+    </div>
+</body>
+<script>
+    var app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                isreg: false,
+                password: '',
+                username: '',
+                vai: '',
+                centerDialogVisible: false,
+                date: new Date(),
+                code: randomStr(),
+                tell: '',
+                no: '',
+                value: 2,
+                options: [
+                    { label: '学生', value: 3 },
+                    { label: '教师', value: 2 },
+                ]
+            }
+        },
+        methods: {
+            login() {
+                if (this.vai == this.code) {
+                    document.forms[0].submit();
+                }
+                else {
+                    app.$message('验证码错误')
+                }
+
+            },
+            reg() {
+                this.isreg = true;
+            },
+            regPost() {
+                let data = {
+                    _no : app.no,
+                    _username : app.username,
+                    _locked : 0,
+                    _enabled : 1,
+                    _password : app.password,
+                    value : app.value
+                }
+                request('POST', '/register', data, function (res) {
+                    app.$message(res.data)
+                    relaodView(1500);
+                }, null);
+            }
+        },
+    })
+    var index = document.getElementById('index');
+    var login = document.getElementsByClassName('login')[0];
+    let x = 0;
+    var aid;
+    var move = function () {
+        x -= 2;
+        index.style.top = x + 'px';
+        if (x > -200) {
+            requestAnimationFrame(move);
+        }
+        else {
+            login.style.opacity = 1;
+        }
+    }
+    move();
+</script>
+
+</html>
