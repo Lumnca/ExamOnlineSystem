@@ -22,6 +22,4 @@ public interface UserInfoMapper {
             "`birthday` = #{birthday}, `address` = #{address}, `info` = #{info}, `imgurl` = #{imgurl}" +
             " WHERE (`id` = #{id})")
     int updateUserData(JSONObject jsonObject);
-
-
 }

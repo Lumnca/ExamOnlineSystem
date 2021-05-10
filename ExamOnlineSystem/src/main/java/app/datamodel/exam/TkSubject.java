@@ -63,16 +63,12 @@ public class TkSubject extends  Subject {
                     input = input.trim();
                 }
                  else{
-
                 }
             }
-
-
-
-                if(a.compareAnswer(input,type)){
-                    a.setDf(a.getScore());
-                    score += a.getScore();
-                }
+            if(a.compareAnswer(input,type)){
+                a.setDf(a.getScore());
+                score += a.getScore();
+            }
         }
         return score;
     }

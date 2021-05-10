@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>我的题目集</title>
+    <title>考试信息</title>
     <script src="../js/vue/vue.js"></script>
     <script src="../js/vue/index.js"></script>
     <script src="../js/vue/axios.min.js"></script>
@@ -67,7 +67,7 @@
                             <span class="el-icon-info"></span> 考试信息
                         </div>
                         <div class="s" @click="updateView(1)">
-                            <span class="el-icon-reading"></span> 人员列表
+                            <span class="el-icon-user"></span> 人员列表
                         </div>
                         <div class="s" @click="updateView(2)">
                             <span class="el-icon-s-grid"></span> 题目列表
@@ -302,7 +302,11 @@
                                                     </template>
                                                 </el-table-column>
                                                 <el-table-column prop="score" label="分数" width="80">
-
+                                                    <template slot-scope="scope">
+                                                        {{
+                                                            scope.row.answer.length>1? scope.row.answer.reduce((pre,cur)=>{return pre.score+cur.score;}) : scope.row.answer.reduce((pre,cur)=>{return cur.score;},0)
+                                                        }}
+                                                    </template>
                                                 </el-table-column>
                                                 <el-table-column fixed="right" label="操作" width="100">
                                                     <template slot-scope="scope">
@@ -357,7 +361,7 @@
                                                             {{ scope.row.title }}</div>
                                                     </template>
                                                 </el-table-column>
-                                                <el-table-column prop="score" label="分数">
+                                                <el-table-column prop="score" label="分数" fixed="right">
 
                                                 </el-table-column>
                                                 <el-table-column fixed="right" label="操作" width="100">
@@ -380,9 +384,7 @@
                                                             {{ scope.row.title }}</div>
                                                     </template>
                                                 </el-table-column>
-                                                <el-table-column prop="score" label="分数">
-                                                </el-table-column>
-                                                <el-table-column prop="answer" label="答案">
+                                                <el-table-column prop="score" label="分数" fixed="right">
                                                 </el-table-column>
                                                 <el-table-column fixed="right" label="操作" width="100">
                                                     <template slot-scope="scope">
@@ -561,14 +563,21 @@
                                             </el-col>
                                             <el-col :span="4">
                                                 <el-button size="mini">查找</el-button>
+                                                <el-button size="mini" type="primary" @click="examsub">发布</el-button>
                                             </el-col>
                                         </el-row>
                                     </div>
                                     <div v-for="(o,ui) in submits" :key="o.id" class="text item"
                                         @click="changeStudent(ui)">
-                                        {{o.name }} -- 得分: {{o.score? o.score:0}} 分
+                                        <span style="color:rgb(98, 214, 98);" v-if="o.subjectives.map(e=>{return e.answer}).indexOf(null)==-1">
+                                                {{o.name }} --  已批改 <i class="el-icon-check"></i>
+                                        </span>
+                                        <span v-else style="color:rgb(218, 64, 85);">
+                                                {{o.name }} --  未批改
+                                        </span>
                                         <br>
-                                        <span style="font-size:14px;">{{o.date}}提交</span>
+                                        <span style="font-size:14px;">{{o.date}}提交 --  得分: {{o.score? o.score:0}} 分</span> 
+                                        
                                     </div>
 
                                 </el-card>
@@ -673,7 +682,7 @@
                         </el-col>
                         <el-col style="text-align:center;" :span="4">
                             <el-button v-if="nowselect != 3" @click="saveExamData" type="primary">保存</el-button>
-                            <el-button v-else @click="saveSubmit" type="primary">保存</el-button>
+                            <el-button v-else @click="saveSubmit" type="primary">确认批改</el-button>
                         </el-col>
                         <el-col :span="4">
                             -
@@ -947,12 +956,17 @@
                 });
             },
             getContent(i) {
-                let data;
+                let data = null;
+                let s = ["选择题", "填空题", "主观题", "判断题"];
                 this.exercise.parts.forEach((e) => {
                     if (e.type == i) {
                         data = e;
                     }
                 });
+                if (data == null) {
+                    data = { content: [], type: i, name: s[i - 1] };
+                    this.exercise.parts.push(data);
+                }
                 return data;
             },
             handleSelectionChange(val) {
@@ -1001,21 +1015,16 @@
                 let ss = [[], [], [], []];
                 app.subjects.sels.forEach((e) => {
                     ss[0].push(e);
-                    sum += e.score;
                 })
                 app.subjects.tks.forEach((e) => {
                     ss[1].push(e);
-                    sum += e.score;
                 })
                 app.subjects.jus.forEach((e) => {
                     ss[2].push(e);
-                    sum += e.score;
                 })
                 app.subjects.sus.forEach((e) => {
                     ss[3].push(e);
-                    sum += e.score;
                 })
-                console.log('元数据总分数:' + sum);
                 app.exercise.parts.push({ name: '选择题', type: 1, content: [] });
                 //选择题
                 if (this.addContent.num[0] != 0) {
@@ -1025,6 +1034,7 @@
                         let r = Math.floor(Math.random() * ss[0].length);
                         //获取元素并移除原数组元素
                         let e = ss[0].splice(r, 1)[0];
+                        sum += e.score;
 
                         app.exercise.parts[0].content.push(e);
                     }
@@ -1037,6 +1047,14 @@
                         let r = Math.floor(Math.random() * ss[1].length);
                         //获取元素并移除原数组元素
                         let e = ss[1].splice(r, 1)[0];
+                        let allscore
+                        if (e.answer.length > 1) {
+                            allscore = e.answer.reduce((pre, cur) => { return pre.score + cur.score });
+                        }
+                        else {
+                            allscore = e.answer.reduce((pre, cur) => { return cur.score }, 0);
+                        }
+                        sum += allscore;
                         app.exercise.parts[1].content.push(e);
                     }
                 }
@@ -1048,12 +1066,11 @@
                         let r = Math.floor(Math.random() * ss[2].length);
                         //获取元素并移除原数组元素
                         let e = ss[2].splice(r, 1)[0];
+                        sum += e.score;
 
                         app.exercise.parts[2].content.push(e);
                     }
                 }
-
-
                 app.exercise.parts.push({ name: '主观题', type: 4, content: [] });
                 if (this.addContent.num[3] != 0) {
                     for (let i = 0; i < this.addContent.num[3]; i++) {
@@ -1061,11 +1078,11 @@
                         let r = Math.floor(Math.random() * ss[3].length);
                         //获取元素并移除原数组元素
                         let e = ss[3].splice(r, 1)[0];
+                        sum += e.score;
 
                         app.exercise.parts[3].content.push(e);
                     }
                 }
-                //94
                 if (sum < app.subjects.score) {
                     let offScore = app.subjects.score - sum;
                     let n = app.exercise.parts[3].content.length;
@@ -1081,23 +1098,24 @@
                     })
                 }
                 else {
-                    let offScore = sum - app.subjects.score;
-                    let n = app.exercise.parts[3].content.length;
-                    app.exercise.parts[3].content.forEach((e, i) => {
-                        if (i == n - 1) {
-                            e.score -= sum - app.subjects.score;
-                        }
-                        else {
-                            e.score -= Math.floor(offScore / n);
-                            sum -= Math.floor(offScore / n);
-                        }
-                    })
+                    if (sum !== 100) {
+                        let offScore = sum - app.subjects.score;
+                        let n = app.exercise.parts[3].content.length;
+                        app.exercise.parts[3].content.forEach((e, i) => {
+                            if (i == n - 1) {
+                                e.score -= sum - app.subjects.score;
+                            }
+                            else {
+                                e.score -= Math.floor(offScore / n);
+                                sum -= Math.floor(offScore / n);
+                            }
+                        })
+                    }
+
                 }
-                console.log('生成成功!总分数:' + sum);
             },
             saveSubmit() {
                 let s = app.updateS();
-                app.submit.user.score += app.submit.content.df;
                 let e = {
                     sid: app.submit.user.sid,
                     eid: app.submit.user.eid,
@@ -1105,11 +1123,12 @@
                     score: app.submit.user.score
                 }
                 request('POST', '/resultex', e, function (res) {
-                    app.$message(res.data.message)
-                    app.updateView(3);
-                    
+                    app.$message(res.data.message);
+                    request('GET', "/submits/" + app.exercise.id, null, function (res) {
+                        app.submits = res.data;
+                    });
+                    app.next();
                 }, null);
-                
             },
             changeStudent(i) {
                 this.changeUI(i);
@@ -1120,22 +1139,27 @@
             },
             updateS() {
                 let p = JSON.parse(app.submits[app.submit.i].submit);
-                let tx = {o1:0,o2:0};
-                p.forEach((e,o1) => {
+                let tx = { o1: 0, o2: 0 };
+                p.forEach((e, o1) => {
                     if (e.type == 3) {
-                        e.content.forEach((t,o2) => {
+                        e.content.forEach((t, o2) => {
                             if (t.id == app.submit.content.id) {
                                 tx.o1 = o1;
-                                tx.o2= o2;
+                                tx.o2 = o2;
                             }
                         })
                     }
                 });
+                app.exercise.parts = JSON.parse(s);
                 p[tx.o1].content[tx.o2] = app.submit.content;
+
                 return JSON.stringify(p);
             },
-            loadexamdata(){
-                window.localStorage.setItem('_examdata',JSON.stringify(app.exercise));
+            loadexamdata() {
+                window.localStorage.setItem('_examdata', JSON.stringify(app.exercise));
+            },
+            examsub(){
+
             }
         },
         computed: {

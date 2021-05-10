@@ -201,11 +201,13 @@
                                     </el-dialog>
                                 </div>
                                 <el-table :data="classes" stripe style="width: 100%">
-                                    <el-table-column prop="date" label="日期" width="180">
+                                    <el-table-column prop="createdate" label="创建日期" width="180">
                                     </el-table-column>
                                     <el-table-column prop="name" label="班级名称">
                                     </el-table-column>
-                                    <el-table-column prop="teacher" label="教师" width="180">
+                                    <el-table-column prop="numbers" label="班级人数" width="180">
+                                    </el-table-column>
+                                    <el-table-column prop="info" label="班级简介">
                                     </el-table-column>
                                     <el-table-column prop="code" label="邀请码" width="180">
                                     </el-table-column>
@@ -257,9 +259,7 @@
                 myexams: [
                     { name: 'xxx', startdate: 'xxx', enddate: 'xxx', type: 1 }
                 ],
-                classes: [
-                    { name: 'C语言班级', teacher: 'key', date: '2021-4-12', code: '' }
-                ],
+                classes: [],
                 username: getUserInfo().username,
                 form: {
                     code: '',
@@ -296,7 +296,7 @@
                 let data = {
                     sid :  getUserInfo().id,
                     cid : app. searchResult.id,
-                    joinDate :  getNowDate(1)
+                    date :  getNowDate(1)
                 }
                 request('POST', '/addclastu',data, function (res) {
                     app.$message(res.data);
@@ -305,10 +305,11 @@
             }
         },
     })
-
+    request('GET', '/stucls/' + getUserInfo().id, null, function (res) {
+        app.classes = res.data;
+    }, null);
 
     request('GET', '/stuexams/' + getUserInfo().id, null, function (res) {
-
         res.data.forEach(e => {
             e.startdate = textDate(e.startdate) + "  " + getNowDate(3, new Date(e.startdate));
             e.enddate = textDate(e.enddate) + "  " + getNowDate(3, new Date(e.enddate));

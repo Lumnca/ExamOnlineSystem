@@ -74,6 +74,11 @@ public class ClassesDao implements ClassesMapper{
         return classesMapper.getClassByCode(code);
     }
 
+    @Override
+    public List<Classes> getClassesByStudnet(Integer sid) {
+        return classesMapper.getClassesByStudnet(sid);
+    }
+
     @Transactional
     public int butchAddStudents(JSONArray objects){
         int i = 0;

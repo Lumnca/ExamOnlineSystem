@@ -12,5 +12,11 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL57Dialect
+  activemq:
+    broker-url: tcp://47.106.254.86:61616
+    packages:
+      trust-all: true
+    user: admin
+    password: admin
 server:
   port: 100

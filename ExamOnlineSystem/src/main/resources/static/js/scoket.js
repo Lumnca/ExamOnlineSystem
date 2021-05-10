@@ -19,9 +19,7 @@ function connect(callback) {
             callback(JSON.stringify(greeting));
         });
     });
-
 }
-
 function sendMeg(name,data) {
     stompClient.send(name,{},data);
 }

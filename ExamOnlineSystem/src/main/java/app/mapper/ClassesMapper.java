@@ -43,4 +43,8 @@ public interface ClassesMapper {
 
     @Select("SELECT * FROM examonline.classes where code = #{code}")
     Classes getClassByCode(String code);
+
+    @Select("SELECT c.name as name,c.code as code,c.numbers as numbers,c.createdate as createdate,c.uid ,c.info,c.id FROM " +
+            "student_class as sc ,classes as c where c.id =  sc.cid and sc.sid = #{sid}")
+    List<Classes> getClassesByStudnet(Integer sid);
 }

@@ -38,7 +38,7 @@ import java.util.Map;
 
 @Configuration
 public class MySecurityConfig extends WebSecurityConfigurerAdapter {
-     private static final String HOST = "http://47.106.254.86:100/";
+     private static final String HOST = "http://127.0.0.1:100/";
     @Autowired
     UserServer userServer;
     @Bean

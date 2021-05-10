@@ -124,7 +124,6 @@ request('GET', "/submits/" + id, null, function (res) {
             subArray[i] += df;
             subArray[i] = parseFloat(subArray[i].toFixed(2));
             tit[i] ? tit[i] = tit[i] : tit[i] = `第${i + 1}题`;
-
             if (!datas[i]) {
                 let d = {
                     no : r.no,

@@ -17,21 +17,17 @@ public class AutoCheckSubject {
     public  List<Result> checkAll(StuExam stuExam){
         int sum = 0;
         List<Result> results = new ArrayList<>();
-
         List<SelectSubject> selectSubjects = examSubject.getSelectSubject(stuExam);
         for (SelectSubject s1 : selectSubjects) {
             if(s1!=null){
                 Result result = new Result();
-
                 result.setScore(s1.checkAnswer());
-                result.setAnswer(String.valueOf((char)('A'+Integer.parseInt(s1.getAnswer()))));
-                result.setInput(String.valueOf((char)('A'+Integer.parseInt(s1.getSelect()))));
+                result.setAnswer(s1.getAnswer());
+                result.setInput(s1.getSelect());
                 result.setNo(++sum);
                 result.setTitle(s1.getTitle());
-
                 results.add(result);
             }
-
         }
 
         List<TkSubject> tkSubjects = examSubject.getTkSubject(stuExam);

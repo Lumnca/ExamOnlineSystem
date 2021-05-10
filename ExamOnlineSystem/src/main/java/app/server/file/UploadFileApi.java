@@ -68,9 +68,7 @@ public class UploadFileApi {
             object.put("error",1);
         }
         object.put("data",imgs);
-        System.out.println(JSONObject.toJSONString(object));
         return object;
-
     }
 
 }

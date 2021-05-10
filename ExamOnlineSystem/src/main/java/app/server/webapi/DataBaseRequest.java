@@ -43,7 +43,11 @@ public class DataBaseRequest {
     @GetMapping("classes/{id}")
     public List<Classes> getAllClassesByUid( @PathVariable(name = "id") Integer id){
         return classesDao.getAllClasses(id);
-}
+    }
+    @GetMapping("stucls/{id}")
+    public List<Classes> getStudentClasses(@PathVariable(name = "id") Integer id){
+        return classesDao.getClassesByStudnet(id);
+    }
 
     @PostMapping("addclass")
     public Response addClasses(@RequestBody Classes classes){
@@ -155,6 +159,7 @@ public class DataBaseRequest {
     public Response updateExam(@RequestBody JSONObject object){
         return response.operationJudge(examDao.updateExam(object),"修改成功！","修改失败！");
     }
+    @CrossOrigin
     @GetMapping("exam/{id}")
     public Exam getExam(@PathVariable("id")Integer id){
         return examDao.getExamById(id);
@@ -209,7 +214,7 @@ public class DataBaseRequest {
    @PostMapping("resultex")
     public Response updateResult(@RequestBody JSONObject object){
         studentExamMapper.updatResult(object);
-
+        System.out.println(object.toJSONString());
         StuExam stuExam = studentExamMapper.getStuExam(object.getInteger("sid"),object.getInteger("eid"));
         List<Result> results =  autoCheckSubject.checkAll(stuExam);
 

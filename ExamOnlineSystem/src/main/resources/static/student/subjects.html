@@ -15,6 +15,7 @@
     <script src="/webjars/jquery/jquery.min.js"></script>
     <script src="/webjars/sockjs-client/sockjs.min.js"></script>
     <script src="/webjars/stomp-websocket/stomp.min.js"></script>
+    <script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
     <link rel="stylesheet" type="text/css" href="../css/index.css">
     <style>
         @import url("https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css");
@@ -89,7 +90,8 @@
                                 <el-row :gutter="5">
                                     <el-col :span="4" v-for="(p,l) in c.content" style="margin-top:4px;">
                                         <div>
-                                            <div @click="changeT(p,c,l,i)" class="sborder">{{l+1}}</div>
+                                            <div v-if="(p.select!==''&&p.select!=undefined)||(p.inputs&&p.inputs.length)||(p.input&&p.input!='')"  @click="changeT(p,c,l,i)" class="uborder">{{l+1}}</div>
+                                            <div v-else @click="changeT(p,c,l,i)" class="sborder">{{l+1}}</div>
                                         </div>
                                     </el-col>
                                 </el-row>
@@ -351,10 +353,16 @@
                                     <div v-for="(o,i) in subject.options" style="margin-top:5px;">
                                         <el-radio v-model="subject.select" :label="i" :disabled="disabled"
                                             style="font-size: 20px;">
-                                            {{String.fromCharCode(65+i)}}.{{o}} </el-radio>
+                                            {{String.fromCharCode(65+i)}}.{{o}} 
+                                        </el-radio>
                                     </div>
                                     <div class="fs" v-if="ex.state==2">
-                                        正确答案: {{String.fromCharCode(65+subject.answer)}}
+                                        <div v-if="subject.type == 1">
+                                            正确答案: {{String.fromCharCode(65+subject.answer)}}
+                                        </div>
+                                       <div v-else>
+                                            正确答案: {{subject.answer.map(e=>{return String.fromCharCode(65+e)})}}
+                                       </div>
                                     </div>
                                 </div>
 
@@ -471,7 +479,7 @@
         state: 0,
         message: '',
         info: '',
-        ip: '127.0.0.1',
+        ip: returnCitySN['cip'],
         date: getNowDate(),
         submit: ''
     }
@@ -659,6 +667,7 @@
         computed: {
             computedTime: function () {
                 if (new Date().getTime() - new Date(this.exercise.enddate) > 0) {
+                    ex.state = 1;
                     this.disabled = true;
                 }
                 return friendlyCountDown(this.exercise.enddate);
@@ -670,6 +679,7 @@
     });
 
     var msgbody = {to:'root',content:'',from:getUserInfo().username}
+    
     request('GET', '/exam/' + id, null, function (res) {
         res.data.parts = JSON.parse(res.data.parts);
         app.exercise = res.data;
@@ -697,8 +707,6 @@
             }, null);
         }
     }, null);
-
- 
 
     connect(function (e) {
         app.dialogVisible9 = true;

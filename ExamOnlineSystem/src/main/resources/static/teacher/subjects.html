@@ -342,7 +342,7 @@
                                                 分数 &nbsp; &nbsp; &nbsp;
                                             </td>
                                             <td>
-                                                <el-input-number v-model="subject.score" :min="1" :max="10">
+                                                <el-input-number v-model="subject.score" :min="1" :max="100">
                                                 </el-input-number>
                                             </td>
                                         </tr>
@@ -405,7 +405,7 @@
                                         </div>
                                         <br>
                                         <el-form-item label="题目分数">
-                                            <el-input-number v-model="selectSubject.score" :min="1" :max="10">
+                                            <el-input-number v-model="selectSubject.score" :min="1" :max="100">
                                             </el-input-number>
                                         </el-form-item>
                                         <div class="bt">
@@ -705,6 +705,7 @@
                         exist = true;
                         app.selectSubject.id = randomOxStr();
                         app.selectSubject.tag = e.type +'-'+ (e.content.length+1);
+                        app.selectSubject.type == 1? app.selectSubject.select = '': app.selectSubject.select = [];
                         e.content.push(app.selectSubject);
                     }
                 });

@@ -109,7 +109,7 @@
                         </el-table-column>
                         <el-table-column label="状态" width="120">
                             <template slot-scope="scope">
-                                <el-tag v-if="scope.state === 1" type="danger">可用</el-tag>
+                                <el-tag v-if="scope.state !== 1" type="danger">可用</el-tag>
                                 <el-tag v-else type="success">不可用</el-tag>
                             </template>
                         </el-table-column>

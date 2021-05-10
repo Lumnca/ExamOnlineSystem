@@ -1,8 +1,9 @@
 package app.datamodel.common;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class Message {
+public class Message implements Serializable {
     private String name;
     private String content;
     private String iden;
@@ -41,5 +42,10 @@ public class Message {
 
     public void setIden(String iden) {
         this.iden = iden;
+    }
+
+    @Override
+    public String toString() {
+        return  "Content:"+this.getContent();
     }
 }
